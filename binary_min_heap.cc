@@ -93,27 +93,47 @@ private:
 int
 main ()
 {
-  binary_min_heap h (100);
+  // Test 1: Basic insertion and get_min
+  binary_min_heap h1(10);
+  h1.insert(5);
+  h1.insert(3);
+  h1.insert(8);
+  h1.insert(1);
+  h1.insert(9);
+  assert(h1.get_min() == 1);
 
-  assert (h.empty ());
-  assert (h.get_min ().error () == binary_min_heap_codes::empty);
+  // Test 2: Deletion of minimum
+  h1.delete_min();
+  assert(h1.get_min() == 3);
+  h1.delete_min();
+  assert(h1.get_min() == 5);
 
-  h.insert (1);
-  h.insert (4);
-  h.insert (-1);
+  // Test 3: Empty heap
+  binary_min_heap h2(10);
+  assert(h2.get_min().error() == binary_min_heap_codes::empty);
 
-  assert (!h.empty ());
-  assert (h.get_min () == -1);
+  // Test 4: Large number of insertions
+  binary_min_heap h3(10);
+  for (int i = 1000; i > 0; --i)
+    h3.insert(i);
 
-  h.delete_min ();
-  assert (h.get_min () == 1);
+  assert(h3.get_min() == 1);
 
-  h.delete_min ();
-  assert (h.get_min () == 4);
+  // Test 5: Duplicate elements
+  binary_min_heap h4(10);
+  h4.insert(5);
+  h4.insert(3);
+  h4.insert(3);
+  h4.insert(1);
+  h4.insert(1);
+  assert(h4.get_min() == 1);
+  h4.delete_min();
+  assert(h4.get_min() == 1);
 
-  h.delete_min ();
-
-  assert (h.empty ());
-
-  return 0;
+  // Test 6: Single element
+  binary_min_heap h5(10);
+  h5.insert(42);
+  assert(h5.get_min() == 42);
+  h5.delete_min();
+  assert(h5.empty());
 }
