@@ -38,6 +38,24 @@ public:
     return _root == nullptr;
   }
 
+  void
+  preorder_print ()
+  {
+    preorder_print (_root);
+  }
+
+  void
+  inorder_print ()
+  {
+    inorder_print (_root);
+  }
+
+  void
+  postorder_print ()
+  {
+    postorder_print (_root);
+  }
+
 private:
   struct node
   {
@@ -132,6 +150,39 @@ private:
       remove (key, root->_right);
     else if (key < root->_key)
       remove (key, root->_left);
+  }
+
+  void
+  preorder_print (node* root)
+  {
+    if (root)
+      {
+	std::print ("{0} ", root->_key);
+	preorder_print (root->_left);
+	preorder_print (root->_right);
+      }
+  }
+
+  void
+  inorder_print (node* root)
+  {
+    if (root)
+      {
+	inorder_print (root->_left);
+	std::print ("{0} ", root->_key);
+	inorder_print (root->_right);
+      }
+  }
+
+  void
+  postorder_print (node* root)
+  {
+    if (root)
+      {
+	postorder_print (root->_left);
+	postorder_print (root->_right);
+	std::print ("{0} ", root->_key);
+      }
   }
 
   node *_root;
@@ -250,6 +301,15 @@ main ()
   assert(complex_tree.contains(65) == true);
   assert(complex_tree.contains(55) == true);
   assert(complex_tree.contains(75) == true);
+
+  std::print ("\n...Printing preorder...\n");
+  complex_tree.preorder_print ();
+
+  std::print ("\n...Printing inorder...\n");
+  complex_tree.inorder_print ();
+
+  std::print ("\n...Printing postorder...\n");
+  complex_tree.postorder_print ();
 
   // Final removals to empty the tree
   complex_tree.remove(40);
