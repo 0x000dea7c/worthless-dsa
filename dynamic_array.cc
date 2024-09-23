@@ -29,7 +29,7 @@ public:
 	if (!tmp)
 	  return;
 
-	for (int i = 0; i < _capacity * 2; ++i)
+	for (int i = 0; i < _capacity; ++i)
 	  tmp[i] = _data[i];
 
 	delete[] _data;
