@@ -26,14 +26,14 @@ public:
     // Create the hole.
     int hole = ++_current_size;
 
-    _data[0] = value;
+    _data[0] = std::move (value);
 
     for ( ; value < _data[hole / 2]; hole /= 2)
       // Move parent downward, and hole upward after.
-      _data[hole] = _data[hole / 2];
+      _data[hole] = std::move (_data[hole / 2]);
 
     // When the loop is finished, you are in the right position to insert.
-    _data[hole] = _data[0];
+    _data[hole] = std::move (_data[0]);
   }
 
   std::expected<int, binary_min_heap_codes>
@@ -68,7 +68,7 @@ private:
   percolate_down (int hole)
   {
     int child;
-    int hole_value {_data[hole]};
+    int hole_value = std::move (_data[hole]);
 
     for ( ; hole * 2 <= _current_size; hole = child)
       {
@@ -78,12 +78,12 @@ private:
 	  ++child;
 
 	if (_data[child] < _data[hole])
-	  _data[hole] = _data[child];
+	  _data[hole] = std::move (_data[child]);
 	else
 	  break;
       }
 
-    _data[hole] = hole_value;
+    _data[hole] = std::move (hole_value);
   }
 
   std::vector<int> _data;
