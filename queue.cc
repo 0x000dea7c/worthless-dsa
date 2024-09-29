@@ -1,28 +1,29 @@
 #include <cassert>
-#include <new>
-#include <list>
 #include <limits>
+#include <new>
 #include <expected>
 
 enum class queue_codes {
+  underflow,
   overflow,
-  underflow
+  empty
 };
+
+
 
 class queue
 {
 public:
   queue (int capacity)
-    : _data          {nullptr},
-      _front         {0},
-      _last_index    {std::numeric_limits<unsigned int>::max()},
-      _size          {0}
+    : _size  {0},
+      _front {0},
+      _rear  {std::numeric_limits<unsigned int>::max ()}
   {
-    assert (capacity > 0);
+    assert (capacity >= 0);
 
     _capacity = capacity;
 
-    _data = new int[_capacity];
+    _data = new int [_capacity];
   }
 
   ~queue ()
@@ -36,11 +37,11 @@ public:
     if (_size == _capacity)
       return std::unexpected (queue_codes::overflow);
 
-    _last_index = (_last_index + 1) % _capacity;
-
-    _data[_last_index] = value;
-
     ++_size;
+
+    _rear = (_rear + 1) % _capacity;
+
+    _data[_rear] = value;
 
     return {};
   }
@@ -51,9 +52,9 @@ public:
     if (empty ())
       return std::unexpected (queue_codes::underflow);
 
-    _front = (_front + 1) % _capacity;
-
     --_size;
+
+    _front = (_front + 1) % _capacity;
 
     return {};
   }
@@ -62,7 +63,7 @@ public:
   front ()
   {
     if (empty ())
-      return std::unexpected (queue_codes::underflow);
+      return std::unexpected (queue_codes::empty);
 
     return _data[_front];
   }
@@ -71,9 +72,9 @@ public:
   rear ()
   {
     if (empty ())
-      return std::unexpected (queue_codes::underflow);
+      return std::unexpected (queue_codes::empty);
 
-    return _data[_last_index];
+    return _data[_rear];
   }
 
   bool
@@ -82,7 +83,7 @@ public:
     return _size == 0;
   }
 
-  unsigned int
+  int
   size () const
   {
     return _size;
@@ -90,11 +91,98 @@ public:
 
 private:
   int* _data;
-  int _capacity;
+  int  _size;
+  int  _capacity;
   unsigned int _front;
-  unsigned int _last_index;
-  unsigned int _size;
+  unsigned int _rear;
 };
+
+// class queue
+// {
+// public:
+//   queue (int capacity)
+//     : _data          {nullptr},
+//       _front         {0},
+//       _last_index    {std::numeric_limits<unsigned int>::max()},
+//       _size          {0}
+//   {
+//     assert (capacity > 0);
+
+//     _capacity = capacity;
+
+//     _data = new int[_capacity];
+//   }
+
+//   ~queue ()
+//   {
+//     delete[] _data;
+//   }
+
+//   std::expected<void, queue_codes>
+//   enqueue (int value)
+//   {
+//     if (_size == _capacity)
+//       return std::unexpected (queue_codes::overflow);
+
+//     _last_index = (_last_index + 1) % _capacity;
+
+//     _data[_last_index] = value;
+
+//     ++_size;
+
+//     return {};
+//   }
+
+//   std::expected<void, queue_codes>
+//   dequeue ()
+//   {
+//     if (empty ())
+//       return std::unexpected (queue_codes::underflow);
+
+//     _front = (_front + 1) % _capacity;
+
+//     --_size;
+
+//     return {};
+//   }
+
+//   std::expected<int, queue_codes>
+//   front ()
+//   {
+//     if (empty ())
+//       return std::unexpected (queue_codes::underflow);
+
+//     return _data[_front];
+//   }
+
+//   std::expected<int, queue_codes>
+//   rear ()
+//   {
+//     if (empty ())
+//       return std::unexpected (queue_codes::underflow);
+
+//     return _data[_last_index];
+//   }
+
+//   bool
+//   empty () const
+//   {
+//     return _size == 0;
+//   }
+
+//   unsigned int
+//   size () const
+//   {
+//     return _size;
+//   }
+
+// private:
+//   int* _data;
+//   int _capacity;
+//   unsigned int _front;
+//   unsigned int _last_index;
+//   unsigned int _size;
+// };
 
 
 int

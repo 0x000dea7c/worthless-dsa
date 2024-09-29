@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include <stack>
+#include <memory>
 
 int constexpr alphabet_size {26};
 
@@ -10,215 +11,379 @@ class trie
 {
 public:
   trie ()
-    : _root {nullptr},
-      _size {0}
-  {}
+  {
+  }
 
   ~trie ()
   {
-    remove_root ();
   }
 
-  void insert (std::string const& key);
+  void
+  insert (std::string const& key)
+  {
+    if (key.empty ())
+      return;
 
-  bool contains_key (std::string const& key) const;
+    if (empty ())
+      _root = std::make_shared<node> (false);
 
-  bool contains_prefix (std::string const& prefix) const;
+    node* current = _root.get ();
 
-  void remove (std::string const& key);
+    for (auto const& c : key)
+      {
+	int child {c - 'a'};
+
+	if (current->_children[child] == nullptr)
+	  current->_children[child] = std::make_shared<node> (false);
+
+	current = current->_children[child].get ();
+      }
+
+    current->_finished = true;
+  }
+
+  void
+  remove (std::string const& key)
+  {
+    if (empty () || key.empty ())
+      return;
+
+    std::stack<std::shared_ptr<node>> nodes;
+    nodes.push (_root);
+
+    for (auto const& c : key)
+      {
+	auto cn = nodes.top ();
+
+	int child {c - 'a'};
+
+	if (cn->_children[child] == nullptr) // key is not in trie
+	  return;
+
+	nodes.push (cn->_children[child]);
+      }
+
+    auto cn = nodes.top ();
+
+    if (!cn->_finished)
+      return;
+
+    if (! is_leaf (cn))
+      {
+	cn->_finished = false;
+	return;
+      }
+
+    while (! nodes.empty ())
+      {
+	auto cn = nodes.top ();
+
+	nodes.pop ();
+
+	if (cn != nullptr && is_leaf (cn))
+	  {
+	    if (! nodes.empty ())
+	      {
+		auto parent = nodes.top ();
+
+		int child {key[nodes.size () - 1] - 'a'};
+
+		parent->_children[child].reset ();
+
+		cn.reset ();
+	      }
+	  }
+      }
+  }
+
+  bool
+  contains_key (std::string const& key) const
+  {
+    if (empty () || key.empty ())
+      return false;
+
+    std::shared_ptr<node> current {_root};
+
+    for (auto const& c : key)
+      {
+	int child {c - 'a'};
+
+	if (current->_children[child] == nullptr)
+	  return false;
+
+	current = current->_children[child];
+      }
+
+    return current->_finished == true;
+  }
+
+  bool
+  contains_prefix (std::string const& prefix) const
+  {
+    if (empty () || prefix.empty ())
+      return false;
+
+    std::shared_ptr<node> current {_root};
+
+    for (auto const& c : prefix)
+      {
+	int child {c - 'a'};
+
+	if (current->_children[child] == nullptr)
+	  return false;
+
+	current = current->_children[child];
+      }
+
+    return true;
+  }
 
   bool
   empty () const
   {
-    return _size == 0;
+    return is_leaf (_root);
   }
 
 private:
   struct node
   {
     node (bool finished)
-      : _children {},
-	_finished {finished}
+      : _finished {finished}
     {}
 
-    std::array<node*, alphabet_size> _children;
+    std::array<std::shared_ptr<node>, alphabet_size> _children;
     bool _finished;
   };
 
   bool
-  is_leaf (node* root) const
+  is_leaf (std::shared_ptr<node> const& n) const
   {
-    for (int i = 0; i < root->_children.size (); ++i)
-      if (root->_children[i] != nullptr)
+    if (n == nullptr)
+      return true;
+
+    for (auto const& p : n->_children)
+      if (p != nullptr)
 	return false;
 
     return true;
   }
 
-  void remove_root ();
-
-  node* _root;
-  int _size;
+  std::shared_ptr<node> _root;
 };
 
-void
-trie::insert (std::string const& key)
-{
-  if (key.empty ())
-    return;
+// class trie
+// {
+// public:
+//   trie ()
+//     : _root {nullptr},
+//       _size {0}
+//   {}
 
-  if (empty ())
-    {
-      _root = new node (false);
-      ++_size;
-    }
+//   ~trie ()
+//   {
+//     remove_root ();
+//   }
 
-  std::stack<node*> nodes;
-  nodes.push (_root);
+//   void insert (std::string const& key);
 
-  for (auto const& c : key)
-    {
-      int child {c - 'a'};
+//   bool contains_key (std::string const& key) const;
 
-      auto* n = nodes.top ();
+//   bool contains_prefix (std::string const& prefix) const;
 
-      nodes.pop ();
+//   void remove (std::string const& key);
 
-      if (n->_children[child] == nullptr)
-	{
-	  n->_children[child] = new node (false);
-	  ++_size;
-	}
+//   bool
+//   empty () const
+//   {
+//     return _size == 0;
+//   }
 
-      nodes.push (n->_children[child]);
-    }
+// private:
+//   struct node
+//   {
+//     node (bool finished)
+//       : _children {},
+// 	_finished {finished}
+//     {}
 
-  nodes.top ()->_finished = true;
-}
+//     std::array<node*, alphabet_size> _children;
+//     bool _finished;
+//   };
 
-bool
-trie::contains_key (std::string const& key) const
-{
-  if (key.empty () || empty ())
-    return false;
+//   bool
+//   is_leaf (node* root) const
+//   {
+//     for (int i = 0; i < root->_children.size (); ++i)
+//       if (root->_children[i] != nullptr)
+// 	return false;
 
-  std::stack<node*> nodes;
-  nodes.push (_root);
+//     return true;
+//   }
 
-  for (auto const& c : key)
-    {
-      int child {c - 'a'};
+//   void remove_root ();
 
-      auto* n = nodes.top ();
+//   node* _root;
+//   int _size;
+// };
 
-      nodes.pop ();
+// void
+// trie::insert (std::string const& key)
+// {
+//   if (key.empty ())
+//     return;
 
-      if (n->_children[child] == nullptr)
-	return false;
+//   if (empty ())
+//     {
+//       _root = new node (false);
+//       ++_size;
+//     }
 
-      nodes.push (n->_children[child]);
-    }
+//   std::stack<node*> nodes;
+//   nodes.push (_root);
 
-  return nodes.top ()->_finished;
-}
+//   for (auto const& c : key)
+//     {
+//       int child {c - 'a'};
 
-bool
-trie::contains_prefix (std::string const& key) const
-{
-  if (key.empty () || empty ())
-    return false;
+//       auto* n = nodes.top ();
 
-  std::stack<node*> nodes;
-  nodes.push (_root);
+//       nodes.pop ();
 
-  for (auto const& c : key)
-    {
-      int child {c - 'a'};
+//       if (n->_children[child] == nullptr)
+// 	{
+// 	  n->_children[child] = new node (false);
+// 	  ++_size;
+// 	}
 
-      auto* n = nodes.top ();
+//       nodes.push (n->_children[child]);
+//     }
 
-      nodes.pop ();
+//   nodes.top ()->_finished = true;
+// }
 
-      if (n->_children[child] == nullptr)
-	return false;
+// bool
+// trie::contains_key (std::string const& key) const
+// {
+//   if (key.empty () || empty ())
+//     return false;
 
-      nodes.push (n->_children[child]);
-    }
+//   std::stack<node*> nodes;
+//   nodes.push (_root);
 
-  return nodes.top ()->_finished == false;
-}
+//   for (auto const& c : key)
+//     {
+//       int child {c - 'a'};
 
-void
-trie::remove (std::string const& key)
-{
-  if (key.empty () || empty ())
-    return;
+//       auto* n = nodes.top ();
 
-  std::stack<node*> nodes;
-  nodes.push (_root);
+//       nodes.pop ();
 
-  for (auto const& c : key)
-    {
-      int child {c - 'a'};
+//       if (n->_children[child] == nullptr)
+// 	return false;
 
-      auto* n = nodes.top ();
+//       nodes.push (n->_children[child]);
+//     }
 
-      if (n->_children[child] == nullptr)
-	return;
+//   return nodes.top ()->_finished;
+// }
 
-      nodes.push (n->_children[child]);
-    }
+// bool
+// trie::contains_prefix (std::string const& key) const
+// {
+//   if (key.empty () || empty ())
+//     return false;
 
-  if (nodes.top ()->_finished == false)
-    return;
+//   std::stack<node*> nodes;
+//   nodes.push (_root);
 
-  if (is_leaf (nodes.top ()))
-    {
-      while (! nodes.empty () && is_leaf (nodes.top ()))
-	{
-	  auto* child = nodes.top ();
-	  nodes.pop ();
+//   for (auto const& c : key)
+//     {
+//       int child {c - 'a'};
 
-	  if (! nodes.empty ())
-	    {
-	      auto* parent = nodes.top ();
-	      int child_index {key[nodes.size () - 1] - 'a'};
-	      parent->_children[child_index] = nullptr;
-	    }
+//       auto* n = nodes.top ();
 
-	  delete child;
-	  --_size;
-	}
-    }
-  else
-    nodes.top ()->_finished = false;
-}
+//       nodes.pop ();
 
-void
-trie::remove_root ()
-{
-  if (empty ())
-    return;
+//       if (n->_children[child] == nullptr)
+// 	return false;
 
-  std::stack<node*> nodes;
-  nodes.push (_root);
+//       nodes.push (n->_children[child]);
+//     }
 
-  while (! nodes.empty ())
-    {
-      auto* c = nodes.top ();
+//   return nodes.top ()->_finished == false;
+// }
 
-      nodes.pop ();
+// void
+// trie::remove (std::string const& key)
+// {
+//   if (key.empty () || empty ())
+//     return;
 
-      for (auto* child : c->_children)
-	if (child != nullptr)
-	  nodes.push (child);
+//   std::stack<node*> nodes;
+//   nodes.push (_root);
 
-      delete c;
-      --_size;
-    }
+//   for (auto const& c : key)
+//     {
+//       int child {c - 'a'};
 
-  _root = nullptr;
-}
+//       auto* n = nodes.top ();
+
+//       if (n->_children[child] == nullptr)
+// 	return;
+
+//       nodes.push (n->_children[child]);
+//     }
+
+//   if (nodes.top ()->_finished == false)
+//     return;
+
+//   if (is_leaf (nodes.top ()))
+//     {
+//       while (! nodes.empty () && is_leaf (nodes.top ()))
+// 	{
+// 	  auto* child = nodes.top ();
+// 	  nodes.pop ();
+
+// 	  if (! nodes.empty ())
+// 	    {
+// 	      auto* parent = nodes.top ();
+// 	      int child_index {key[nodes.size () - 1] - 'a'};
+// 	      parent->_children[child_index] = nullptr;
+// 	    }
+
+// 	  delete child;
+// 	  --_size;
+// 	}
+//     }
+//   else
+//     nodes.top ()->_finished = false;
+// }
+
+// void
+// trie::remove_root ()
+// {
+//   if (empty ())
+//     return;
+
+//   std::stack<node*> nodes;
+//   nodes.push (_root);
+
+//   while (! nodes.empty ())
+//     {
+//       auto* c = nodes.top ();
+
+//       nodes.pop ();
+
+//       for (auto* child : c->_children)
+// 	if (child != nullptr)
+// 	  nodes.push (child);
+
+//       delete c;
+//       --_size;
+//     }
+
+//   _root = nullptr;
+// }
 
 int
 main ()

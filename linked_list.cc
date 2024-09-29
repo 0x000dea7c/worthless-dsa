@@ -9,31 +9,28 @@ public:
     : _head {nullptr},
       _tail {nullptr},
       _size {0}
-  {
-  }
+  {}
 
   ~linked_list ()
   {
-    auto* c = _head;
+    node* previous {nullptr};
 
-    while (c != nullptr)
+    while (_head != nullptr)
       {
-	auto* t = c->_next;
-	delete c;
-	c = t;
+	previous = _head;
+	_head = _head->_next;
+	delete previous;
       }
   }
 
   void
   append (int value)
   {
-    auto* new_node = new (std::nothrow) node (nullptr, value);
-
     if (empty ())
-      _head = _tail = new_node;
+      _head = _tail = new node (_head, value);
     else
       {
-	_tail->_next = new_node;
+	_tail->_next = new node (nullptr, value);
 	_tail = _tail->_next;
       }
 
@@ -43,63 +40,64 @@ public:
   void
   remove (int value)
   {
-    if (empty ())
+    node* current   {_head};
+    node* previous {nullptr};
+
+    while (current != nullptr && current->_value != value)
+      {
+	previous = current;
+	current  = current->_next;
+      }
+
+    if (current == nullptr)
       return;
 
-    if (_head->_value == value)
+    if (current == _head && current == _tail)
       {
-	auto* n = _head->_next;
-	delete _head;
-	_head = n;
-	--_size;
-	return;
+	delete current;
+	_head = _tail = nullptr;
+      }
+    else if (current == _head)
+      {
+	previous = _head;
+	_head = _head->_next;
+	delete previous;
+      }
+    else if (current == _tail)
+      {
+	delete _tail;
+	_tail = previous;
+      }
+    else
+      {
+	previous->_next = current->_next;
+	delete current;
       }
 
-    auto* c = _head;
-
-    while (c->_next != nullptr && c->_next->_value != value)
-      c = c->_next;
-
-    if (c->_next != nullptr)
-      {
-	auto* t = c->_next->_next;
-	delete c->_next;
-	c->_next = t;
-	--_size;
-
-	if (c->_next == nullptr)
-	  _tail = nullptr;
-      }
+    --_size;
   }
 
   bool
   contains (int value)
   {
-    auto* c = _head;
+    node* current {_head};
 
-    while (c != nullptr)
-      {
-	if (c->_value == value)
-	  return true;
+    while (current != nullptr && current->_value != value)
+      current = current->_next;
 
-	c = c->_next;
-      }
-
-    return false;
+    return current != nullptr ? true : false;
   }
 
   void
-  display () const
+  display ()
   {
-    auto* c = _head;
+    node* current {_head};
 
-    while (c != nullptr)
+    while (current != nullptr)
       {
-	std::cout << c->_value << ' ';
-	c = c->_next;
+	std::cout << current->_value << ' ';
+	current = current->_next;
       }
-
-    std::cout << std::endl;
   }
 
   int
@@ -108,24 +106,24 @@ public:
     return _size;
   }
 
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
-
   void
   prepend (int value)
   {
     if (empty ())
+      _head = _tail = new node (_head, value);
+    else
       {
-	append (value);
-	return;
+	auto* t = new node (_head, value);
+	_head = t;
       }
 
-    _head = new (std::nothrow) node (_head, value);
-
     ++_size;
+  }
+
+  bool
+  empty () const
+  {
+    return _size == 0;
   }
 
 private:
@@ -144,6 +142,149 @@ private:
   node* _tail;
   int _size;
 };
+
+// class linked_list
+// {
+// public:
+//   linked_list ()
+//     : _head {nullptr},
+//       _tail {nullptr},
+//       _size {0}
+//   {
+//   }
+
+//   ~linked_list ()
+//   {
+//     auto* c = _head;
+
+//     while (c != nullptr)
+//       {
+// 	auto* t = c->_next;
+// 	delete c;
+// 	c = t;
+//       }
+//   }
+
+//   void
+//   append (int value)
+//   {
+//     auto* new_node = new (std::nothrow) node (nullptr, value);
+
+//     if (empty ())
+//       _head = _tail = new_node;
+//     else
+//       {
+// 	_tail->_next = new_node;
+// 	_tail = _tail->_next;
+//       }
+
+//     ++_size;
+//   }
+
+//   void
+//   remove (int value)
+//   {
+//     if (empty ())
+//       return;
+
+//     if (_head->_value == value)
+//       {
+// 	auto* n = _head->_next;
+// 	delete _head;
+// 	_head = n;
+// 	--_size;
+// 	return;
+//       }
+
+//     auto* c = _head;
+
+//     while (c->_next != nullptr && c->_next->_value != value)
+//       c = c->_next;
+
+//     if (c->_next != nullptr)
+//       {
+// 	auto* t = c->_next->_next;
+// 	delete c->_next;
+// 	c->_next = t;
+// 	--_size;
+
+// 	if (c->_next == nullptr)
+// 	  _tail = nullptr;
+//       }
+//   }
+
+//   bool
+//   contains (int value)
+//   {
+//     auto* c = _head;
+
+//     while (c != nullptr)
+//       {
+// 	if (c->_value == value)
+// 	  return true;
+
+// 	c = c->_next;
+//       }
+
+//     return false;
+//   }
+
+//   void
+//   display () const
+//   {
+//     auto* c = _head;
+
+//     while (c != nullptr)
+//       {
+// 	std::cout << c->_value << ' ';
+// 	c = c->_next;
+//       }
+
+//     std::cout << std::endl;
+//   }
+
+//   int
+//   size () const
+//   {
+//     return _size;
+//   }
+
+//   bool
+//   empty () const
+//   {
+//     return size () == 0;
+//   }
+
+//   void
+//   prepend (int value)
+//   {
+//     if (empty ())
+//       {
+// 	append (value);
+// 	return;
+//       }
+
+//     _head = new (std::nothrow) node (_head, value);
+
+//     ++_size;
+//   }
+
+// private:
+//   struct node
+//   {
+//     node (node* next, int value)
+//       : _next  {next},
+// 	_value {value}
+//     {}
+
+//     node* _next;
+//     int _value;
+//   };
+
+//   node* _head;
+//   node* _tail;
+//   int _size;
+// };
 
 int
 main ()
