@@ -2,5 +2,6 @@ queue
 binary_search_tree
 binary_min_heap
 dynamic_array
-linked_list
+singly_linked_list
+doubly_linked_list
 trie
