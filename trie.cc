@@ -7,15 +7,42 @@
 
 int constexpr alphabet_size {26};
 
+// only supports lowercase words! no spaces in between!
 class trie
 {
 public:
   trie ()
+    : _root {nullptr}
   {
   }
 
   ~trie ()
   {
+    if (_root == nullptr)
+      return;
+
+    std::stack<node*> nodes;
+    nodes.push (_root);
+
+    while (! nodes.empty ())
+      {
+	auto* node = nodes.top ();
+
+	nodes.pop ();
+
+	for (int i = 0; i < node->_children.size (); ++i)
+	  {
+	    if (node->_children[i] != nullptr && is_leaf (node->_children[i]))
+	      {
+		delete node->_children[i];
+		node->_children[i] = nullptr;
+	      }
+	    else if (node->_children[i] != nullptr)
+	      nodes.push (node->_children[i]);
+	  }
+
+	delete node;
+      }
   }
 
   void
@@ -25,16 +52,16 @@ public:
       return;
 
     if (empty ())
-      _root = std::make_shared<node> (false);
+      _root = new node (false);
 
-    std::shared_ptr<node> current = _root;
+    node* current {_root};
 
     for (auto const& c : key)
       {
 	int child {c - 'a'};
 
 	if (current->_children[child] == nullptr)
-	  current->_children[child] = std::make_shared<node> (false);
+	  current->_children[child] = new node (false);
 
 	current = current->_children[child];
       }
@@ -48,12 +75,12 @@ public:
     if (empty () || key.empty ())
       return;
 
-    std::stack<std::shared_ptr<node>> nodes;
+    std::stack<node*> nodes;
     nodes.push (_root);
 
     for (auto const& c : key)
       {
-	auto cn = nodes.top ();
+	auto* cn = nodes.top ();
 
 	int child {c - 'a'};
 
@@ -63,20 +90,18 @@ public:
 	nodes.push (cn->_children[child]);
       }
 
-    auto cn = nodes.top ();
-
-    if (!cn->_finished)
+    if (! nodes.top ()->_finished)
       return;
 
-    if (! is_leaf (cn))
+    if (! is_leaf (nodes.top ()))
       {
-	cn->_finished = false;
+	nodes.top ()->_finished = false;
 	return;
       }
 
     while (! nodes.empty ())
       {
-	auto cn = nodes.top ();
+	auto* cn = nodes.top ();
 
 	nodes.pop ();
 
@@ -84,13 +109,18 @@ public:
 	  {
 	    if (! nodes.empty ())
 	      {
-		auto parent = nodes.top ();
+		auto* parent = nodes.top ();
 
 		int child {key[nodes.size () - 1] - 'a'};
 
-		parent->_children[child].reset ();
+		parent->_children[child] = nullptr;
 
-		cn.reset ();
+		delete cn;
+	      }
+	    else
+	      {
+		delete _root;
+		_root = nullptr;
 	      }
 	  }
       }
@@ -102,7 +132,7 @@ public:
     if (empty () || key.empty ())
       return false;
 
-    std::shared_ptr<node> current {_root};
+    node* current {_root};
 
     for (auto const& c : key)
       {
@@ -123,7 +153,7 @@ public:
     if (empty () || prefix.empty ())
       return false;
 
-    std::shared_ptr<node> current {_root};
+    node* current {_root};
 
     for (auto const& c : prefix)
       {
@@ -149,14 +179,17 @@ private:
   {
     node (bool finished)
       : _finished {finished}
-    {}
+    {
+      for (auto*& n : _children)
+	n = nullptr;
+    }
 
-    std::array<std::shared_ptr<node>, alphabet_size> _children;
+    std::array<node*, alphabet_size> _children;
     bool _finished;
   };
 
   bool
-  is_leaf (std::shared_ptr<node> const& n) const
+  is_leaf (node* n) const
   {
     if (n == nullptr)
       return true;
@@ -168,7 +201,7 @@ private:
     return true;
   }
 
-  std::shared_ptr<node> _root;
+  node* _root;
 };
 
 int
@@ -232,6 +265,14 @@ main ()
   t2.remove ("blah"s);
 
   assert (t2.empty ());
+
+  trie t3;			// leak check
+  t3.insert ("imstupid"s);
+  t3.insert ("imnot"s);
+  t3.insert ("smart"s);
+  t3.insert ("but"s);
+  t3.insert ("itry"s);
+  t3.insert ("mybest"s);
 
   return 0;
 }
