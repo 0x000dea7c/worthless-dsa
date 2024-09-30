@@ -152,165 +152,6 @@ private:
   int _size;
 };
 
-// class singly_linked_list final
-// {
-// public:
-//   singly_linked_list ()
-//     : _head {nullptr},
-//       _tail {nullptr},
-//       _size {0}
-//   {}
-
-//   ~singly_linked_list ()
-//   {
-//     if (empty ())
-//       return;
-
-//     node* current {_head};
-
-//     while (current != nullptr)
-//       {
-// 	auto* t = current->_next;
-// 	delete current;
-// 	current = t;
-//       }
-//   }
-
-//   void
-//   append (int value)
-//   {
-//     if (empty ())
-//       {
-// 	_head = _tail = new node (nullptr, value);
-//       }
-//     else
-//       {
-// 	auto* n = new node (nullptr, value);
-// 	_tail->_next = n;
-// 	_tail = n;
-//       }
-
-//     ++_size;
-//   }
-
-//   void
-//   prepend (int value)
-//   {
-//     if (empty ())
-//       {
-// 	_head = _tail = new node (nullptr, value);
-//       }
-//     else
-//       {
-// 	auto* n = new node (_head, value);
-// 	_head = n;
-//       }
-
-//     ++_size;
-//   }
-
-//   void
-//   remove (int value)
-//   {
-//     if (empty ())
-//       return;
-
-//     if (_head->_value == value)
-//       {
-// 	auto* t = _head;
-// 	_head = _head->_next;
-// 	delete t;
-//       }
-//     else if (_tail->_value == value)
-//       {
-// 	node* previous {nullptr};
-// 	node* current  {_head};
-
-// 	for (int i = 0; i < _size; ++i)
-// 	  {
-// 	    previous = current;
-// 	    current  = current->_next;
-// 	  }
-
-// 	previous->_next = nullptr;
-// 	delete current;
-// 	_tail = previous;
-//       }
-//     else
-//       {
-// 	node* previous {nullptr};
-// 	node* current  {_head};
-
-// 	while (current != nullptr && current->_value != value)
-// 	  {
-// 	    previous = current;
-// 	    current  = current->_next;
-// 	  }
-
-// 	if (current == nullptr)
-// 	  return;
-
-// 	previous->_next = current->_next;
-// 	delete current;
-//       }
-
-//     --_size;
-//   }
-
-//   bool
-//   contains (int value) const
-//   {
-//     node* current {_head};
-
-//     while (current != nullptr && current->_value != value)
-//       current = current->_next;
-
-//     return current == nullptr ? false : true;
-//   }
-
-//   void
-//   display () const
-//   {
-//     node* current {_head};
-
-//     while (current != nullptr)
-//       {
-// 	std::cout << current->_value << ' ';
-// 	current = current->_next;
-//       }
-
-//     std::cout << '\n';
-//   }
-
-//   int
-//   size () const
-//   {
-//     return _size;
-//   }
-
-//   bool
-//   empty () const
-//   {
-//     return _size == 0;
-//   }
-
-// private:
-//   struct node final
-//   {
-//     node (node* next, int value)
-//       : _next  {next},
-// 	_value {value}
-//     {}
-
-//     node* _next;
-//     int _value;
-//   };
-
-//   node* _head;
-//   node* _tail;
-//   int _size;
-// };
-
 int
 main ()
 {
@@ -371,6 +212,17 @@ main ()
   list8.remove (1);
   list8.remove (2);
   assert (list8.empty () == true);
+
+  singly_linked_list list9;	// leak check
+  list9.append (1);
+  list9.append (2);
+  list9.append (3);
+
+  singly_linked_list list10;
+  list10.prepend (5);
+  list10.remove (5);
+
+  assert (list10.empty () == true);
 
   std::cout << "All tests passed!\n";
 
