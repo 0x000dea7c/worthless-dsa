@@ -3,18 +3,20 @@
 #include <array>
 #include <string>
 #include <stack>
-#include <memory>
 
 int constexpr alphabet_size {26};
 
 // only supports lowercase words! no spaces in between!
-class trie
+
+template<typename T>
+concept is_std_string = std::is_same_v<T, std::string>;
+
+class trie final
 {
 public:
   trie ()
     : _root {nullptr}
-  {
-  }
+  {}
 
   ~trie ()
   {
@@ -26,27 +28,29 @@ public:
 
     while (! nodes.empty ())
       {
-	auto* node = nodes.top ();
+	auto* current_node = nodes.top ();
 
 	nodes.pop ();
 
-	for (int i = 0; i < node->_children.size (); ++i)
+	for (int i = 0; i < current_node->_children.size (); ++i)
 	  {
-	    if (node->_children[i] != nullptr && is_leaf (node->_children[i]))
+	    if (current_node->_children[i] != nullptr && is_leaf (current_node->_children[i]))
 	      {
-		delete node->_children[i];
-		node->_children[i] = nullptr;
+		delete current_node->_children[i];
+		current_node->_children[i] = nullptr;
 	      }
-	    else if (node->_children[i] != nullptr)
-	      nodes.push (node->_children[i]);
+	    else if (current_node->_children[i] != nullptr)
+	      {
+		nodes.push (current_node->_children[i]);
+	      }
 	  }
 
-	delete node;
+	delete current_node;
       }
   }
 
   void
-  insert (std::string const& key)
+  insert (is_std_string auto key)
   {
     if (key.empty ())
       return;
@@ -54,25 +58,25 @@ public:
     if (empty ())
       _root = new node (false);
 
-    node* current {_root};
+    node* current_node {_root};
 
     for (auto const& c : key)
       {
 	int child {c - 'a'};
 
-	if (current->_children[child] == nullptr)
-	  current->_children[child] = new node (false);
+	if (current_node->_children[child] == nullptr)
+	  current_node->_children[child] = new node (false);
 
-	current = current->_children[child];
+	current_node = current_node->_children[child];
       }
 
-    current->_finished = true;
+    current_node->_finished = true;
   }
 
   void
-  remove (std::string const& key)
+  remove (is_std_string auto key)
   {
-    if (empty () || key.empty ())
+    if (key.empty () || empty ())
       return;
 
     std::stack<node*> nodes;
@@ -80,17 +84,17 @@ public:
 
     for (auto const& c : key)
       {
-	auto* cn = nodes.top ();
+	auto* n = nodes.top ();
 
 	int child {c - 'a'};
 
-	if (cn->_children[child] == nullptr) // key is not in trie
+	if (n->_children[child] == nullptr) // the key doesn't exist, so you can exit
 	  return;
 
-	nodes.push (cn->_children[child]);
+	nodes.push (n->_children[child]);
       }
 
-    if (! nodes.top ()->_finished)
+    if (nodes.top ()->_finished == false) // the word is in the dictionary, but it's not register as a word (part of another one maybe?)
       return;
 
     if (! is_leaf (nodes.top ()))
@@ -99,70 +103,59 @@ public:
 	return;
       }
 
-    while (! nodes.empty ())
+    while (! nodes.empty () && is_leaf (nodes.top ()))
       {
-	auto* cn = nodes.top ();
+	auto* child_node = nodes.top ();
 
 	nodes.pop ();
 
-	if (cn != nullptr && is_leaf (cn))
+	if (! nodes.empty ())
 	  {
-	    if (! nodes.empty ())
-	      {
-		auto* parent = nodes.top ();
-
-		int child {key[nodes.size () - 1] - 'a'};
-
-		parent->_children[child] = nullptr;
-
-		delete cn;
-	      }
-	    else
-	      {
-		delete _root;
-		_root = nullptr;
-	      }
+	    auto* parent = nodes.top ();
+	    int child {key[nodes.size () - 1] - 'a'};
+	    parent->_children[child] = nullptr;
+	    delete child_node;
 	  }
       }
   }
 
   bool
-  contains_key (std::string const& key) const
+  contains_key (is_std_string auto key) const
   {
-    if (empty () || key.empty ())
+    if (key.empty () || empty ())
       return false;
 
-    node* current {_root};
+    node* current_node {_root};
 
     for (auto const& c : key)
       {
 	int child {c - 'a'};
 
-	if (current->_children[child] == nullptr)
+	if (current_node->_children[child] == nullptr)
 	  return false;
 
-	current = current->_children[child];
+	current_node = current_node->_children[child];
       }
 
-    return current->_finished == true;
+    return current_node->_finished;
   }
 
   bool
-  contains_prefix (std::string const& prefix) const
+  contains_prefix (is_std_string auto prefix) const
   {
-    if (empty () || prefix.empty ())
+    if (prefix.empty () || empty ())
       return false;
 
-    node* current {_root};
+    node* current_node {_root};
 
     for (auto const& c : prefix)
       {
 	int child {c - 'a'};
 
-	if (current->_children[child] == nullptr)
+	if (current_node->_children[child] == nullptr)
 	  return false;
 
-	current = current->_children[child];
+	current_node = current_node->_children[child];
       }
 
     return true;
@@ -175,13 +168,13 @@ public:
   }
 
 private:
-  struct node
+  struct node final
   {
     node (bool finished)
       : _finished {finished}
     {
-      for (auto*& n : _children)
-	n = nullptr;
+      for (auto*& p : _children)
+	p = nullptr;
     }
 
     std::array<node*, alphabet_size> _children;
@@ -194,8 +187,8 @@ private:
     if (n == nullptr)
       return true;
 
-    for (auto const& p : n->_children)
-      if (p != nullptr)
+    for (auto* child : n->_children)
+      if (child != nullptr)
 	return false;
 
     return true;
