@@ -1,17 +1,23 @@
 #include <cassert>
-#include <new>
+#include <cstdint>
+#include <cstring>
+#include <stdexcept>
+#include <iostream>
 
-class dynamic_array
+using u32 = std::uint32_t;
+using i32 = std::int32_t;
+
+class dynamic_array final
 {
 public:
-  dynamic_array (int capacity = 8)
+  dynamic_array (u32 capacity = 8)
     : _data     {nullptr},
-      _capacity {capacity},
-      _size     {0}
+      _size     {0},
+      _capacity {0}
   {
-    assert (_capacity > 0);
-
-    _data = new int[_capacity];
+    assert (capacity != 0);
+    _capacity = capacity;
+    _data = new i32[_capacity];
   }
 
   ~dynamic_array ()
@@ -20,55 +26,44 @@ public:
   }
 
   void
-  insert (int value)
+  insert (i32 value)
   {
     if (_size == _capacity)
       {
 	_capacity *= 2;
 
-	auto* t = new int[_capacity];
+	i32* new_data = new i32[_capacity];
 
-	for (int i = 0; i < _size; ++i)
-	  t[i] = _data[i];
+	for (u32 i {}; i < _size; ++i)
+	  new_data[i] = _data[i];
 
 	delete[] _data;
 
-	_data = t;
+	_data = new_data;
       }
 
-    _data[_size] = value;
-
-    ++_size;
+    _data[_size++] = value;
   }
 
   void
-  remove (int value)
+  pop_back ()
   {
-    int i = 0;
-
-    for ( ; i < _size; ++i)
-      if (_data[i] == value)
-	break;
-
-    if (i == _size)
+    if (empty ())
       return;
-
-    for (int j = i; j < _size - 1; ++j)
-      _data[j] = _data[j + 1];
 
     --_size;
   }
 
-  int
-  operator[] (int index)
+  i32
+  operator[] (u32 index) const
   {
-    if (empty () || index < 0 || index >= _size)
-      return -1;
+    if (index > _size - 1)
+      throw std::runtime_error ("Out of bounds");
 
     return _data[index];
   }
 
-  int
+  u32
   size () const
   {
     return _size;
@@ -77,140 +72,53 @@ public:
   bool
   empty () const
   {
-    return _size == 0;
+    return size () == 0;
   }
 
-  int
+  u32
   capacity () const
   {
     return _capacity;
   }
 
   bool
-  contains (int value) const
+  contains (i32 value) const
   {
-    for (int i = 0; i < _size; ++i)
+    for (u32 i {}; i < _size; ++i)
       if (value == _data[i])
 	return true;
-
     return false;
   }
 
   void
-  set (int index, int value)
+  set (u32 index, i32 value)
   {
-    if (empty () || index < 0 || index >= _size)
-      return;
+    if (index > _size - 1)
+      throw std::runtime_error ("Out of bounds");
 
     _data[index] = value;
   }
 
+  void
+  remove (u32 index)
+  {
+    if (index > _size - 1)
+      throw std::runtime_error ("Out of bounds");
+
+    if (empty ())
+      return;
+
+    for (u32 i {index}; i < _size; ++i)
+      _data[i] =_data[i + 1];
+
+    --_size;
+  }
+
 private:
-
-  int* _data;
-  int _size;
-  int _capacity;
+  i32* _data;
+  u32  _size;
+  u32  _capacity;
 };
-
-// class dynamic_array
-// {
-// public:
-//   dynamic_array (int capacity = 8)
-//     : _size {0}
-//   {
-//     assert (capacity > 0);
-
-//     _capacity = capacity;
-
-//     _data = new (std::nothrow) int[_capacity];
-//   }
-
-//   ~dynamic_array ()
-//   {
-//     delete[] _data;
-//   }
-
-//   void
-//   insert (int value)
-//   {
-//     if (_size == _capacity)
-//       {
-// 	auto* tmp = new (std::nothrow) int[_capacity * 2];
-
-// 	if (!tmp)
-// 	  return;
-
-// 	for (int i = 0; i < _capacity; ++i)
-// 	  tmp[i] = _data[i];
-
-// 	delete[] _data;
-
-// 	_data = tmp;
-
-// 	_capacity *= 2;
-//       }
-
-//     _data[_size++] = value;
-//   }
-
-//   void
-//   remove (int value)
-//   {
-//     int i = 0;
-//     bool found = false;
-
-//     for ( ; i < _size; ++i)
-//       {
-// 	if (_data[i] == value)
-// 	  {
-// 	    found = true;
-// 	    break;
-// 	  }
-//       }
-
-//     if (found)
-//       {
-// 	for (int j = i; j < _size - 1; ++j)
-// 	  _data[j] = _data[j + 1];
-// 	--_size;
-//       }
-//   }
-
-//   bool
-//   contains (int value)
-//   {
-//     for (int i = 0; i < _size; ++i)
-//       if (_data[i] == value)
-// 	return true;
-
-//     return false;
-//   }
-
-//   bool
-//   empty () const
-//   {
-//     return _size == 0;
-//   }
-
-//   int
-//   operator[] (int index)
-//   {
-//     assert (index >= 0 && index < _size);
-
-//     return _data[index];
-//   }
-
-//   int
-//   size () const
-//   {
-//     return _size;
-//   }
-
-// private:
-//   int* _data;
-//   int  _capacity;
-//   int  _size;
-// };
 
 int
 main ()
@@ -226,18 +134,31 @@ main ()
   assert (d[1] == 9);
   assert (d[2] == 10);
 
-  d.remove (8);
+  d.remove (0);
   assert (d[0] == 9);
   assert (d[1] == 10);
 
-  d.remove (9);
+  d.remove (0);
   assert (d[0] == 10);
 
-  d.remove (10);
+  d.remove (0);
 
   assert (d.empty ());
 
-  d.remove (10);			// Doesn't crash, doesn't do anything.
+  try
+    {
+      d.remove (10);
+    }
+  catch (std::runtime_error const& e)
+    {
+      assert (std::strcmp (e.what (), "Out of bounds") == 0);
+    }
+
+  d.insert (1);
+  d.insert (2);
+
+  assert (d[0] == 1);
+  assert (d[1] == 2);
 
   dynamic_array d2;
   d2.insert (5);
@@ -249,10 +170,10 @@ main ()
 
   // Resizing.
   dynamic_array d3 (1);
-  d.insert (1);
-  d.insert (2);
-  assert (d[0] == 1);
-  assert (d[1] == 2);
+  d3.insert (1);
+  d3.insert (2);
+  assert (d3[0] == 1);
+  assert (d3[1] == 2);
 
   dynamic_array d4;
 
@@ -267,6 +188,37 @@ main ()
 
   assert (d4[999] == 69);
   assert (d4[998] == 71);
+
+  dynamic_array d5;
+  d5.insert (1);
+  d5.insert (2);
+  d5.insert (3);
+  d5.insert (4);
+  d5.insert (5);
+
+  d5.pop_back ();
+  assert (d5[3] == 4);
+  assert (d5[2] == 3);
+  assert (d5[1] == 2);
+  assert (d5[0] == 1);
+
+  d4.pop_back ();
+  assert (d5[2] == 3);
+  assert (d5[1] == 2);
+  assert (d5[0] == 1);
+
+  d3.pop_back ();
+  assert (d5[1] == 2);
+  assert (d5[0] == 1);
+
+  d3.pop_back ();
+  assert (d5[0] == 1);
+
+  d3.pop_back ();
+
+  assert (d3.empty ());
+
+  std::cout << "Test passed!\n";
 
   return 0;
 }

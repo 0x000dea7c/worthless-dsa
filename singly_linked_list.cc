@@ -1,6 +1,10 @@
 #include <cassert>
 #include <iostream>
 #include <cstdlib>
+#include <cstdint>
+
+using u32 = std::uint32_t;
+using i32 = std::int32_t;
 
 class singly_linked_list final
 {
@@ -24,58 +28,55 @@ public:
   }
 
   void
-  append (int value)
+  append (i32 value)
   {
     if (empty ())
-      _head = _tail = new node (nullptr, value);
-    else
       {
-	auto* n = new node (nullptr, value);
-	_tail->_next = n;
-	_tail = _tail->_next;
+	_head = _tail = new node (nullptr, value);
       }
-    ++_size;
-  }
-
-  void
-  prepend (int value)
-  {
-    if (empty ())
-      _head = _tail = new node (nullptr, value);
     else
       {
-	auto* n = new node (_head, value);
-	_head = n;
+	auto* t = new node (nullptr, value);
+	_tail->_next = t;
+	_tail = t;
       }
 
     ++_size;
   }
 
   void
-  remove (int value)
+  prepend (i32 value)
+  {
+    if (empty ())
+      {
+	_head = _tail = new node (nullptr, value);
+      }
+    else
+      {
+	auto* t = new node (_head, value);
+	_head = t;
+      }
+
+    ++_size;
+  }
+
+  void
+  remove (i32 value)
   {
     if (empty ())
       return;
 
     if (_head->_value == value)
       {
-	if (_head == _tail)
-	  {
-	    delete _head;
-	    _head = _tail = nullptr;
-	  }
-	else
-	  {
-	    auto* t = _head;
-	    _head = _head->_next;
-	    delete t;
-	  }
+	auto* t = _head->_next;
+	delete _head;
+	_head = t;
       }
     else if (_tail->_value == value)
       {
-	node* current  {_head};
+	node* current {_head};
 
-	while (current->_next != _tail)
+	while (current != nullptr && current->_next != _tail)
 	  current = current->_next;
 
 	current->_next = nullptr;
@@ -84,8 +85,8 @@ public:
       }
     else
       {
-	node* previous {nullptr};
-	node* current  {_head};
+	node* previous {_head};
+	node* current  {_head->_next};
 
 	while (current != nullptr && current->_value != value)
 	  {
@@ -104,19 +105,25 @@ public:
   }
 
   bool
-  contains (int value) const
+  contains (i32 value) const
   {
+    if (empty ())
+      return false;
+
     node* current {_head};
 
     while (current != nullptr && current->_value != value)
       current = current->_next;
 
-    return current != nullptr ? true : false;
+    return (current != nullptr) ? true : false;
   }
 
   void
   display () const
   {
+    if (empty ())
+      return;
+
     node* current {_head};
 
     while (current != nullptr)
@@ -125,10 +132,10 @@ public:
 	current = current->_next;
       }
 
-    std::cout << '\n';
+    std::cout <<  '\n';
   }
 
-  int
+  u32
   size () const
   {
     return _size;
@@ -143,13 +150,18 @@ public:
 private:
   struct node final
   {
+    node (node* next, i32 value)
+      : _next  {next},
+	_value {value}
+    {}
+
     node* _next;
-    int _value;
+    i32 _value;
   };
 
   node* _head;
   node* _tail;
-  int _size;
+  u32   _size;
 };
 
 int

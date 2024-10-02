@@ -1,23 +1,21 @@
 #include <cstdlib>
-#include <memory>
 #include <iostream>
 #include <cassert>
+#include <cstdint>
 
-class doubly_linked_list
+using u32 = std::uint32_t;
+
+class doubly_linked_list final
 {
 public:
   doubly_linked_list ()
     : _head {nullptr},
       _tail {nullptr},
       _size {0}
-  {
-  }
+  {}
 
   ~doubly_linked_list ()
   {
-    if (empty ())
-      return;
-
     node* current {_head};
 
     while (current != nullptr)
@@ -32,12 +30,14 @@ public:
   append (int value)
   {
     if (empty ())
-      _head = _tail = new node (nullptr, nullptr, value);
+      {
+	_head = _tail = new node (nullptr, nullptr, value);
+      }
     else
       {
-	auto* n = new node (_tail, nullptr, value);
-	_tail->_next = n;
-	_tail = n;
+	node* new_node = new node (_tail, nullptr, value);
+	_tail->_next = new_node;
+	_tail = new_node;
       }
 
     ++_size;
@@ -47,12 +47,14 @@ public:
   prepend (int value)
   {
     if (empty ())
-      _head = _tail = new node (nullptr, nullptr, value);
+      {
+	_head = _tail = new node (nullptr, nullptr, value);
+      }
     else
       {
-	auto* n = new node (nullptr, _head, value);
-	_head->_prev = n;
-	_head = n;
+	node* new_node = new node (nullptr, _head, value);
+	_head->_prev = new_node;
+	_head = new_node;
       }
 
     ++_size;
@@ -82,16 +84,16 @@ public:
       }
     else
       {
-	node* current  {_head->_next};
+	node* current {_head->_next};
 
 	while (current != nullptr && current->_value != value)
-	  current  = current->_next;
+	  current = current->_next;
 
-	node* previous {current->_prev};
-	node* next     {current->_next};
+	if (current == nullptr)
+	  return;
 
-	previous->_next = next;
-	next->_prev = previous;
+	current->_prev->_next = current->_next;
+	current->_next->_prev = current->_prev;
 	delete current;
       }
 
@@ -106,15 +108,12 @@ public:
     while (current != nullptr && current->_value != value)
       current = current->_next;
 
-    return (current == nullptr) ? false : true;
+    return current == nullptr ? false : true;
   }
 
   void
   display () const
   {
-    if (empty ())
-      return;
-
     node* current {_head};
 
     while (current != nullptr)
@@ -126,7 +125,7 @@ public:
     std::cout << '\n';
   }
 
-  int
+  u32
   size () const
   {
     return _size;
@@ -135,7 +134,7 @@ public:
   bool
   empty () const
   {
-    return _size == 0;
+    return size () == 0;
   }
 
 private:
@@ -147,14 +146,14 @@ private:
 	_value {value}
     {}
 
-    node *_prev;
-    node *_next;
+    node* _prev;
+    node* _next;
     int _value;
   };
 
   node* _head;
   node* _tail;
-  int   _size;
+  u32 _size;
 };
 
 int

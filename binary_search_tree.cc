@@ -2,13 +2,12 @@
 #include <iostream>
 #include <stack>
 
-class binary_search_tree
+class binary_search_tree final
 {
 public:
   binary_search_tree ()
     : _root {nullptr}
   {}
-
 
   ~binary_search_tree ()
   {
@@ -58,7 +57,7 @@ public:
   }
 
 private:
-  struct node
+  struct node final
   {
     node (node* left, node* right, int key, int value)
       : _left  {left},
@@ -69,61 +68,59 @@ private:
 
     node* _left;
     node* _right;
-    int _key;
-    int _value;
+    int   _key;
+    int   _value;
   };
+
+  node*
+  find_min (node* current)
+  {
+    while (current->_left != nullptr)
+      current = current->_left;
+
+    return current;
+  }
 
   void
   insert (int key, int value, node*& root)
   {
     if (root == nullptr)
       root = new node (nullptr, nullptr, key, value);
-    else if (key > root->_key)
+
+    if (key > root->_key)
       insert (key, value, root->_right);
     else if (key < root->_key)
       insert (key, value, root->_left);
     else
-      return;
+      return;			// duplicated, don't do anything
   }
 
   void
   remove (int key, node*& root)
   {
     if (root == nullptr)
-      return;
-    else if (key > root->_key)
+      return;			// doesn't exist
+
+    if (key > root->_key)
       remove (key, root->_right);
     else if (key < root->_key)
       remove (key, root->_left);
     else
       {
-	if (root->_left && root->_right)
+	if (root->_left != nullptr && root->_right != nullptr)
 	  {
-	    auto* t = find_min (root->_right);
-	    root->_key = std::move (t->_key);
-	    root->_value = std::move (t->_value);
-	    remove (t->_key, root->_right);
+	    auto* min = find_min (root->_right);
+	    root->_key   = std::move (min->_key);
+	    root->_value = std::move (min->_value);
+	    remove (root->_key, root->_right);
 	  }
 	else
 	  {
-	    auto* t = root->_left != nullptr ? root->_left : root->_right;
+	    node* child = root->_left != nullptr ? root->_left : root->_right;
 	    delete root;
-	    root = t;
+	    root = child;
 	  }
       }
-  }
-
-  bool
-  contains (int key, node* root) const
-  {
-    if (root == nullptr)
-      return false;
-    else if (key > root->_key)
-      return contains (key, root->_right);
-    else if (key < root->_key)
-      return contains (key, root->_left);
-    else
-      return true;
   }
 
   void
@@ -131,7 +128,7 @@ private:
   {
     if (root != nullptr)
       {
-	std::cout << root->_key << ' ';
+	std::cout << root->_value << ' ';
 	preorder_print (root->_left);
 	preorder_print (root->_right);
       }
@@ -143,7 +140,7 @@ private:
     if (root != nullptr)
       {
 	inorder_print (root->_left);
-	std::cout << root->_key << ' ';
+	std::cout << root->_value << ' ';
 	inorder_print (root->_right);
       }
   }
@@ -155,8 +152,22 @@ private:
       {
 	postorder_print (root->_left);
 	postorder_print (root->_right);
-	std::cout << root->_key << ' ';
+	std::cout << root->_value << ' ';
       }
+  }
+
+  bool
+  contains (int key, node* root) const
+  {
+    if (root == nullptr)
+      return false;
+
+    if (key > root->_key)
+      return contains (key, root->_right);
+    if (key < root->_key)
+      return contains (key, root->_left);
+    else
+      return true;
   }
 
   void
@@ -170,15 +181,6 @@ private:
       }
   }
 
-  node*
-  find_min (node* root)
-  {
-    while (root->_left != nullptr)
-      root = root->_left;
-
-    return root;
-  }
-
   node* _root;
 };
 
@@ -189,24 +191,53 @@ private:
 //     : _root {nullptr}
 //   {}
 
+
 //   ~binary_search_tree ()
 //   {
 //     make_empty (_root);
 //   }
 
-//   void insert (int key, int value);
+//   void
+//   insert (int key, int value)
+//   {
+//     insert (key, value, _root);
+//   }
 
-//   void remove (int key);
+//   void
+//   remove (int key)
+//   {
+//     remove (key, _root);
+//   }
 
-//   bool contains (int key) const;
+//   bool
+//   contains (int key) const
+//   {
+//     return contains (key, _root);
+//   }
 
-//   bool empty () const { return _root == nullptr; }
+//   bool
+//   empty () const
+//   {
+//     return _root == nullptr;
+//   }
 
-//   void preorder_print () const;
+//   void
+//   preorder_print () const
+//   {
+//     preorder_print (_root);
+//   }
 
-//   void inorder_print () const;
+//   void
+//   inorder_print () const
+//   {
+//     inorder_print (_root);
+//   }
 
-//   void postorder_print () const;
+//   void
+//   postorder_print () const
+//   {
+//     postorder_print (_root);
+//   }
 
 // private:
 //   struct node
@@ -224,174 +255,114 @@ private:
 //     int _value;
 //   };
 
-//   void insert (int key, int value, node*& root);
-//   void remove (int key, node*& root);
-//   bool contains (int key, node* root) const;
-//   node* find_min (node* root) const;
-//   void make_empty (node* root);
-//   void preorder_print (node* root) const;
-//   void inorder_print (node* root) const;
-//   void postorder_print (node* root) const;
+//   void
+//   insert (int key, int value, node*& root)
+//   {
+//     if (root == nullptr)
+//       root = new node (nullptr, nullptr, key, value);
+//     else if (key > root->_key)
+//       insert (key, value, root->_right);
+//     else if (key < root->_key)
+//       insert (key, value, root->_left);
+//     else
+//       return;
+//   }
+
+//   void
+//   remove (int key, node*& root)
+//   {
+//     if (root == nullptr)
+//       return;
+//     else if (key > root->_key)
+//       remove (key, root->_right);
+//     else if (key < root->_key)
+//       remove (key, root->_left);
+//     else
+//       {
+// 	if (root->_left && root->_right)
+// 	  {
+// 	    auto* t = find_min (root->_right);
+// 	    root->_key = std::move (t->_key);
+// 	    root->_value = std::move (t->_value);
+// 	    remove (t->_key, root->_right);
+// 	  }
+// 	else
+// 	  {
+// 	    auto* t = root->_left != nullptr ? root->_left : root->_right;
+// 	    delete root;
+// 	    root = t;
+// 	  }
+//       }
+//   }
+
+//   bool
+//   contains (int key, node* root) const
+//   {
+//     if (root == nullptr)
+//       return false;
+//     else if (key > root->_key)
+//       return contains (key, root->_right);
+//     else if (key < root->_key)
+//       return contains (key, root->_left);
+//     else
+//       return true;
+//   }
+
+//   void
+//   preorder_print (node* root) const
+//   {
+//     if (root != nullptr)
+//       {
+// 	std::cout << root->_key << ' ';
+// 	preorder_print (root->_left);
+// 	preorder_print (root->_right);
+//       }
+//   }
+
+//   void
+//   inorder_print (node* root) const
+//   {
+//     if (root != nullptr)
+//       {
+// 	inorder_print (root->_left);
+// 	std::cout << root->_key << ' ';
+// 	inorder_print (root->_right);
+//       }
+//   }
+
+//   void
+//   postorder_print (node* root) const
+//   {
+//     if (root != nullptr)
+//       {
+// 	postorder_print (root->_left);
+// 	postorder_print (root->_right);
+// 	std::cout << root->_key << ' ';
+//       }
+//   }
+
+//   void
+//   make_empty (node* root)
+//   {
+//     if (root != nullptr)
+//       {
+// 	make_empty (root->_left);
+// 	make_empty (root->_right);
+// 	delete root;
+//       }
+//   }
+
+//   node*
+//   find_min (node* root)
+//   {
+//     while (root->_left != nullptr)
+//       root = root->_left;
+
+//     return root;
+//   }
 
 //   node* _root;
 // };
-
-// void
-// binary_search_tree::insert (int key, int value)
-// {
-//   insert (key, value, _root);
-// }
-
-// void
-// binary_search_tree::remove (int key)
-// {
-//   remove (key, _root);
-// }
-
-// bool
-// binary_search_tree::contains (int key) const
-// {
-//   return contains (key, _root);
-// }
-
-// void
-// binary_search_tree::preorder_print () const
-// {
-//   preorder_print (_root);
-// }
-
-// void
-// binary_search_tree::inorder_print () const
-// {
-//   inorder_print (_root);
-// }
-
-// void
-// binary_search_tree::postorder_print () const
-// {
-//   postorder_print (_root);
-// }
-
-// void
-// binary_search_tree::insert (int key, int value, node*& root)
-// {
-//   if (root == nullptr)
-//     root = new node (nullptr, nullptr, key, value);
-
-//   if (key > root->_key)
-//     insert (key, value, root->_right);
-//   else if (key < root->_key)
-//     insert (key, value, root->_left);
-// }
-
-// void
-// binary_search_tree::remove (int key, node*& root)
-// {
-//   if (root == nullptr)
-//     return;
-
-//   if (key > root->_key)
-//     remove (key, root->_right);
-//   else if (key < root->_key)
-//     remove (key, root->_left);
-//   else
-//     {
-//       if (root->_left && root->_right)
-// 	{
-// 	  auto* min = find_min (root->_right);
-// 	  root->_key = std::move (min->_key);
-// 	  root->_value = std::move (min->_value);
-// 	  remove (min->_key, root->_right);
-// 	}
-//       else
-// 	{
-// 	  auto* old = root;
-// 	  root = (root->_right != nullptr) ? root->_right : root->_left;
-// 	  delete old;
-// 	}
-//     }
-// }
-
-// bool
-// binary_search_tree::contains (int key, node* root) const
-// {
-//   if (root == nullptr)
-//     return false;
-//   else if (key > root->_key)
-//     return contains (key, root->_right);
-//   else if (key < root->_key)
-//     return contains (key, root->_left);
-//   else
-//     return true;
-// }
-
-// binary_search_tree::node*
-// binary_search_tree::find_min (node* root) const
-// {
-//   while (root->_left != nullptr)
-//     root = root->_left;
-
-//   return root;
-// }
-
-// void
-// binary_search_tree::preorder_print (node* root) const
-// {
-//   if (root != nullptr)
-//     {
-//       std::cout << root->_key << ' ';
-//       preorder_print (root->_left);
-//       preorder_print (root->_right);
-//     }
-// }
-
-// void
-// binary_search_tree::inorder_print (node* root) const
-// {
-//   if (root != nullptr)
-//     {
-//       inorder_print (root->_left);
-//       std::cout << root->_key << ' ';
-//       inorder_print (root->_right);
-//     }
-// }
-
-// void
-// binary_search_tree::postorder_print (node* root) const
-// {
-//   if (root != nullptr)
-//     {
-//       postorder_print (root->_left);
-//       postorder_print (root->_right);
-//       std::cout << root->_key << ' ';
-//     }
-// }
-
-// void
-// binary_search_tree::make_empty (node* root)
-// {
-//   std::stack<node*> current;
-
-//   if (_root != nullptr)
-//     current.push (_root);
-
-//   while (! current.empty ())
-//     {
-//       auto* old = current.top ();
-
-//       current.pop ();
-
-//       if (old->_right)
-// 	current.push (old->_right);
-
-//       if (old->_left)
-// 	current.push (old->_left);
-
-//       delete old;
-//     }
-
-//   _root = nullptr;
-// }
 
 int
 main ()
