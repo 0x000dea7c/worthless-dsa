@@ -6,3 +6,4 @@ all:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singly_linked_list.cc -o singly_linked_list
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined doubly_linked_list.cc -o doubly_linked_list
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dynamic_array.cc -o dynamic_array
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_graph.cc -o sparse_graph

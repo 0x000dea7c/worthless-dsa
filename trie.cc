@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <array>
+#include <vector>
 #include <string>
 #include <stack>
 
@@ -167,6 +168,53 @@ public:
     return is_leaf (_root);
   }
 
+  std::vector<std::string>
+  get_words_with_shared_prefix (is_std_string auto prefix)
+  {
+    if (prefix.empty () || empty ())
+      return {};
+
+    std::vector<std::string> shared;
+    node* current {_root};
+
+    for (auto const&  c : prefix)
+      {
+	int child {c - 'a'};
+
+	if (current->_children[child] == nullptr)
+	  return {};
+
+	current = current->_children[child];
+      }
+
+    std::stack<std::pair<node*, std::string>> nodes;
+    nodes.push (std::make_pair<> (current, prefix));
+
+    while (! nodes.empty ())
+      {
+	bool is_leaf {true};
+
+	auto node = nodes.top ();
+
+	nodes.pop ();
+
+	for (int i = 0; i < node.first->_children.size (); ++i)
+	  {
+	    if (node.first->_children[i] != nullptr)
+	      {
+		char current = static_cast<char> ('a' + i);
+		nodes.push (make_pair<> (node.first->_children[i], node.second + current));
+		is_leaf = false;
+	      }
+	  }
+
+	if (is_leaf && node.first->_finished == true)
+	  shared.emplace_back (node.second);
+      }
+
+    return shared;
+  }
+
 private:
   struct node final
   {
@@ -266,6 +314,13 @@ main ()
   t3.insert ("but"s);
   t3.insert ("itry"s);
   t3.insert ("mybest"s);
+
+  auto shared = t3.get_words_with_shared_prefix ("im"s);
+  assert (shared.size () == 2);
+  assert (shared[0] == "imstupid"s);
+  assert (shared[1] == "imnot"s);
+
+  std::cout << "All test passed!\n";
 
   return 0;
 }
