@@ -1,9 +1,27 @@
-all:
+all: binary_min_heap queue trie binary_search_tree tire singly_linked_list doubly_linked_list dynamic_array sparse_undirected_graph
+
+binary_min_heap:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined binary_min_heap.cc -o binary_min_heap
+
+queue:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined queue.cc -o queue
+
+binary_search_tree:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined binary_search_tree.cc -o binary_search_tree
+
+trie:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined trie.cc -o trie
+
+singly_linked_list:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singly_linked_list.cc -o singly_linked_list
+
+doubly_linked_list:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined doubly_linked_list.cc -o doubly_linked_list
+
+dynamic_array:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dynamic_array.cc -o dynamic_array
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_graph.cc -o sparse_graph
+
+sparse_undirected_graph:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_undirected_graph.cc -o sparse_undirected_graph
+
+.PHONY: sparse_undirected_graph
