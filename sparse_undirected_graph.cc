@@ -43,14 +43,12 @@ public:
     if (value.empty ())
       return;
 
-    auto id = std::hash<std::string>{} (value);
-
-    if (_vertices.find (id) != _vertices.end ()) // no duplicate vertices
+    if (_vertices.find (value) != _vertices.end ()) // no duplicate vertices
       return;
 
-    _vertices[id] = new vertex (value);
+    _vertices[value] = new vertex (value);
 
-    _list[id] = std::vector<u32> ();
+    _list[value] = std::vector<std::string> ();
   }
 
   void
@@ -59,18 +57,19 @@ public:
     if (value.empty ())
       return;
 
-    auto id = std::hash<std::string>{} (value);
+    auto adjacency_it = _list.find (value);
 
-    auto it = _list.find (id);
-
-    if (it == _list.end ())
+    if (adjacency_it == _list.end ())
       return;
 
-    _list.erase (it);
+    _list.erase (adjacency_it);
 
-    delete _vertices[id];
+    auto vertex_it = _vertices.find (value);
+    delete vertex_it->second;
+    _vertices.erase(vertex_it);
 
-    _vertices.erase (_vertices.find (id));
+    for (auto& [key, adjacency_list] : _list)
+      adjacency_list.erase (std::remove (adjacency_list.begin (), adjacency_list.end (), value), adjacency_list.end ());
   }
 
   void
@@ -84,19 +83,16 @@ public:
     if (source.empty () || destination.empty ())
       return;
 
-    auto source_id      = std::hash<std::string>{} (source);
-    auto destination_id = std::hash<std::string>{} (destination);
-
-    if (_vertices.find (source_id)      == _vertices.end () ||
-	_vertices.find (destination_id) == _vertices.end ())
+    if (_vertices.find (source)      == _vertices.end () ||
+	_vertices.find (destination) == _vertices.end ())
       return;
 
     // avoid duplicates, add both entries because this is a undirected graph
-    if (std::count (_list[source_id].begin (), _list[source_id].end (), destination_id) == 0)
-      _list[source_id].push_back (destination_id);
+    if (std::count (_list[source].begin (), _list[source].end (), destination) == 0)
+      _list[source].push_back (destination);
 
-    if (std::count (_list[destination_id].begin (), _list[destination_id].end (), source_id) == 0)
-      _list[destination_id].push_back (source_id);
+    if (std::count (_list[destination].begin (), _list[destination].end (), source) == 0)
+      _list[destination].push_back (source);
   }
 
   void
@@ -117,8 +113,8 @@ public:
 	_vertices.find (destination_id) == _vertices.end ())
       return;
 
-    std::remove_if (_list[source_id].begin (), _list[source_id].end (), [destination_id] (u32 edge) { return edge == destination_id; });
-    std::remove_if (_list[destination_id].begin (), _list[destination_id].end (), [source_id] (u32 edge) { return edge == source_id; });
+    _list[source_id].erase (std::remove (_list[source_id].begin (), _list[source_id].end (), destination_id), _list[source_id].end ());
+    _list[destination_id].erase (std::remove (_list[destination_id].begin (), _list[destination_id].end (), source_id), _list[destination_id].end ());
   }
 
   void
@@ -135,21 +131,15 @@ public:
       }
   }
 
-  u32
-  size () const
-  {
-    return _vertices.size ();
-  }
-
   bool
   empty () const
   {
-    return size () == 0;
+    return _vertices.size () == 0;
   }
 
 private:
-  std::unordered_map<u32, std::vector<u32>> _list; // adjacency list, actually
-  std::unordered_map<u32, vertex*> _vertices;
+  std::unordered_map<std::string, std::vector<std::string>> _list; // adjacency list, actually
+  std::unordered_map<std::string, vertex*> _vertices;
 };
 
 int
@@ -164,9 +154,18 @@ main ()
   graph.add_vertex ("C"s);
   graph.add_vertex ("D"s);
 
+  assert (! graph.empty ());
+
   graph.add_edge ("A"s, "B"s);
   graph.add_edge ("B"s, "C"s);
   graph.add_edge ("C"s, "D"s);
+
+  graph.print ();
+
+  graph.remove_vertex ("D"s);
+  graph.remove_vertex ("A"s);
+
+  std::cout << "After removing...\n";
 
   graph.print ();
 
