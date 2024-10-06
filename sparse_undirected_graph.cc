@@ -239,5 +239,7 @@ main ()
   std::cout << "Printing vertices with its edges after removing...\n";
   graph.print ();
 
+  std::cout << "All tests passed!\n";
+
   return EXIT_SUCCESS;
 }

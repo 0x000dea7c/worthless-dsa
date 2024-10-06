@@ -5,7 +5,10 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <iostream>
+#include <stack>
+#include <queue>
 
 using i32 = std::int32_t;
 using u32 = std::uint32_t;
@@ -15,7 +18,7 @@ concept std_string = std::is_same_v<T, std::string>;
 
 struct vertex final
 {
-  vertex (std_string auto value)
+  explicit vertex (std_string auto value)
     : _value {value}
   {}
 
@@ -105,13 +108,69 @@ public:
   void
   dfs (std_string auto root) const
   {
+    if (_key_to_index.count (root) == 0)
+      return;
 
+    std::unordered_set<std::string> visited;
+    std::stack<std::string> nodes;
+    nodes.push (root);
+    visited.emplace (root);
+
+    while (! nodes.empty ())
+      {
+	auto key = nodes.top ();
+
+	nodes.pop ();
+
+	std::cout << key << '\n';
+
+	auto key_id = _key_to_index.at (key);
+
+	for (u32 i {}; i < _matrix[key_id].size (); ++i)
+	  {
+	    auto edge_key = _index_to_key.at (i);
+
+	    if (visited.count (edge_key) == 0 && _matrix[key_id][i] == true)
+	      {
+		visited.emplace (edge_key);
+		nodes.push (edge_key);
+	      }
+	  }
+      }
   }
 
   void
   bfs (std_string auto root) const
   {
+    if (_key_to_index.count (root) == 0)
+      return;
 
+    std::unordered_set<std::string> visited;
+    std::queue<std::string> nodes;
+    nodes.push (root);
+    visited.emplace (root);
+
+    while (! nodes.empty ())
+      {
+	auto key = nodes.front ();
+
+	nodes.pop ();
+
+	std::cout << key << '\n';
+
+	auto key_id = _key_to_index.at (key);
+
+	for (u32 i {}; i < _matrix[key_id].size (); ++i)
+	  {
+	    auto edge_key = _index_to_key.at (i);
+
+	    if (visited.count (edge_key) == 0 && _matrix[key_id][i] == true)
+	      {
+		visited.emplace (edge_key);
+		nodes.push (edge_key);
+	      }
+	  }
+      }
   }
 
   bool
@@ -165,7 +224,47 @@ main ()
   assert (graph.has_edge ("C"s, "D"s));
   assert (graph.has_edge ("D"s, "C"s));
 
+  std::cout << "...Printing all graph...\n";
   graph.print ();
+
+  std::cout << "...dfs...\n";
+  graph.dfs ("B"s);
+
+  std::cout << "...bfs...\n";
+  graph.bfs ("B"s);
+
+  graph.remove_edge ("A"s, "B"s);
+
+  assert (! graph.has_edge ("A"s, "B"s));
+
+  // disconnected graph
+  std::vector<vertex*> vertices2 = {new vertex ("X"s), new vertex ("Y"s), new vertex ("Z"s)};
+  dense_undirected_graph graph2 (vertices2);
+  assert (! graph2.has_edge ("X"s, "Y"s));
+  assert (! graph2.has_edge ("Y"s, "Z"s));
+
+  // graph with self edge
+  std::vector<vertex*> vertices3 = {new vertex ("P"s), new vertex ("Q"s), new vertex ("R"s)};
+  dense_undirected_graph graph3 (vertices3);
+  graph3.add_edge ("P"s, "Q"s);
+  graph3.add_edge ("P"s, "R"s);
+  graph3.add_edge ("Q"s, "R"s);
+  assert(graph3.has_edge("P"s, "Q"s));
+  assert(graph3.has_edge("P"s, "R"s));
+  assert(graph3.has_edge("Q"s, "R"s));
+  graph3.add_edge("P"s, "P"s);
+  assert(graph3.has_edge("P"s, "P"s));
+
+  // this dfs shouldn't show a self-edge (but it's good if you ask)
+  std::cout << "...Printing dfs of graph that has a self edge...\n";
+  graph3.dfs ("P"s);
+
+  // empty graph
+  std::vector<vertex*> vertices4;
+  dense_undirected_graph graph4 (vertices4);
+  assert (! graph4.has_edge ("A"s, "B"s)); // don't crash bitch
+
+  std::cout << "All tests passed!\n";
 
   return EXIT_SUCCESS;
 }
