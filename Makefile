@@ -24,4 +24,8 @@ dynamic_array:
 sparse_undirected_graph:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_undirected_graph.cc -o sparse_undirected_graph
 
-.PHONY: sparse_undirected_graph
+dense_undirected_graph:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_undirected_graph.cc -o dense_undirected_graph
+
+
+.PHONY: sparse_undirected_graph dense_undirected_graph

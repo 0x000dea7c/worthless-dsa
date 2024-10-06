@@ -6,3 +6,4 @@ singly_linked_list
 doubly_linked_list
 trie
 sparse_undirected_graph
+dense_undirected_graph

@@ -204,7 +204,7 @@ public:
 
 private:
   std::unordered_map<std::string, std::vector<std::string>> _list; // adjacency list, actually
-  std::unordered_map<std::string, vertex*> _vertices;
+  std::unordered_map<std::string, vertex*> _vertices;		   // this looks stupid
 };
 
 int
