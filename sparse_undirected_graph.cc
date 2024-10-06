@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <algorithm>
 #include <iostream>
+#include <stack>
+#include <unordered_set>
+#include <queue>
 
 using i32 = std::int32_t;
 using u32 = std::uint32_t;
@@ -137,6 +140,68 @@ public:
     return _vertices.size () == 0;
   }
 
+  void
+  dfs (std_string auto root) const
+  {
+    if (_vertices.count (root) == 0)
+      return;
+
+    std::unordered_set<std::string> visited;
+    std::stack<std::string> nodes;
+    nodes.push (root);
+    visited.emplace (root);
+
+    while (! nodes.empty ())
+      {
+	auto current_vertex = nodes.top ();
+
+	nodes.pop ();
+
+	std::cout << current_vertex << '\n';
+
+	for (auto const& edge : _list.at (current_vertex))
+	  {
+	    if (visited.count (edge) == 0)
+	      {
+		visited.emplace (edge);
+		nodes.push (edge);
+	      }
+	  }
+      }
+
+    std::cout << '\n';
+  }
+
+  void
+  bfs (std_string auto root) const
+  {
+    if (_vertices.count (root) == 0)
+      return;
+
+    std::unordered_set<std::string> visited;
+    std::queue<std::string> nodes;
+    nodes.push (root);
+    visited.emplace (root);
+
+    while (! nodes.empty ())
+      {
+	auto current_vertex = nodes.front ();
+
+	nodes.pop ();
+
+	std::cout << current_vertex << '\n';
+
+	for (auto const& edge : _list.at (current_vertex))
+	  {
+	    if (visited.count (edge) == 0)
+	      {
+		visited.emplace (edge);
+		nodes.push (edge);
+	      }
+	  }
+      }
+  }
+
 private:
   std::unordered_map<std::string, std::vector<std::string>> _list; // adjacency list, actually
   std::unordered_map<std::string, vertex*> _vertices;
@@ -160,13 +225,18 @@ main ()
   graph.add_edge ("B"s, "C"s);
   graph.add_edge ("C"s, "D"s);
 
+  std::cout << "Priting all vertices with its edges\n";
   graph.print ();
+
+  std::cout << "... DFS ...\n";
+  graph.dfs ("B"s);
+  std::cout << "... BFS ...\n";
+  graph.bfs ("B"s);
 
   graph.remove_vertex ("D"s);
   graph.remove_vertex ("A"s);
 
-  std::cout << "After removing...\n";
-
+  std::cout << "Printing vertices with its edges after removing...\n";
   graph.print ();
 
   return EXIT_SUCCESS;
