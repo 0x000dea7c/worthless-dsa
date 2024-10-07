@@ -1,5 +1,3 @@
-all: binary_min_heap queue trie binary_search_tree tire singly_linked_list doubly_linked_list dynamic_array sparse_undirected_graph
-
 binary_min_heap:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined binary_min_heap.cc -o binary_min_heap
 
@@ -28,4 +26,4 @@ dense_undirected_graph:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_undirected_graph.cc -o dense_undirected_graph
 
 
-.PHONY: sparse_undirected_graph dense_undirected_graph
+.PHONY: binary_search_tree sparse_undirected_graph dense_undirected_graph doubly_linked_list
