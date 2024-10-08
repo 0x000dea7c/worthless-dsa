@@ -13,6 +13,7 @@
 using i32 = std::int32_t;
 using u32 = std::uint32_t;
 
+// TODO: needs cleanup
 template<typename T>
 concept std_string = std::is_same_v<T, std::string>;
 
@@ -25,9 +26,9 @@ struct vertex final
   std::string _value;
 };
 
-// also unweighted graph!!!!!!
 // assumption: you won't be adding/removing vertices because it's freaking expensive.
 // in fact, you need to pass a vector with every vertex created because fuck it
+// assumption: connected unweighted graph
 class dense_undirected_graph final
 {
 public:

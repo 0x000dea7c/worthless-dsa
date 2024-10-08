@@ -8,3 +8,4 @@ trie
 sparse_undirected_graph
 dense_undirected_graph
 string_permutation
+sparse_directed_graph

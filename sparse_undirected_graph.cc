@@ -10,10 +10,13 @@
 #include <unordered_set>
 #include <memory>
 #include <queue>
+#include <utility>
 
 using i32 = std::int32_t;
 using u32 = std::uint32_t;
 
+// TODO: needs huge cleanup
+// assumption: it's a connected graph!!!!!!!
 template<typename T>
 concept std_string = std::is_same_v<T, std::string>;
 
@@ -209,6 +212,15 @@ public:
     return false;
   }
 
+  bool
+  has_edge (std_string auto source, std_string auto destination) const
+  {
+    if (empty () || source.empty () || destination.empty () || _vertices.count (source) == 0 || _vertices.count (destination) == 0)
+      return false;
+
+    return _list.at (source).count (destination) > 0 && _list.at (destination).count (source) > 0;
+  }
+
 private:
   std::unordered_map<std::string, std::unique_ptr<vertex>> _vertices;
   std::unordered_map<std::string, std::unordered_set<std::string>> _list;
@@ -302,6 +314,12 @@ main ()
   assert (graph.has_cycle ("A"s));
   assert (graph.has_cycle ("B"s));
   assert (graph.has_cycle ("C"s));
+
+  assert (graph.has_edge ("A"s, "B"s));
+  assert (graph.has_edge ("B"s, "C"s));
+  assert (graph.has_edge ("C"s, "A"s));
+
+  assert (! graph.has_edge ("D"s, "A"s));
 
   std::cout << "All tests passed!\n";
 
