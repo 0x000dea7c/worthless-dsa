@@ -25,5 +25,8 @@ sparse_undirected_graph:
 dense_undirected_graph:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_undirected_graph.cc -o dense_undirected_graph
 
+string_permutation:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined string_permutation.cc -o string_permutation
 
-.PHONY: binary_search_tree sparse_undirected_graph dense_undirected_graph doubly_linked_list
+
+.PHONY: binary_search_tree sparse_undirected_graph dense_undirected_graph doubly_linked_list string_permutation
