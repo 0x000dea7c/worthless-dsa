@@ -13,7 +13,9 @@ public:
     : _head {nullptr},
       _tail {nullptr},
       _size {0}
-  {}
+  {
+
+  }
 
   ~singly_linked_list ()
   {
@@ -21,9 +23,9 @@ public:
 
     while (current != nullptr)
       {
-	auto* t = current->_next;
+	auto* next = current->_next;
 	delete current;
-	current = t;
+	current = next;
       }
   }
 
@@ -36,11 +38,10 @@ public:
       }
     else
       {
-	auto* t = new node (nullptr, value);
-	_tail->_next = t;
-	_tail = t;
+	auto* n = new node (nullptr, value);
+	_tail->_next = n;
+	_tail = n;
       }
-
     ++_size;
   }
 
@@ -53,10 +54,9 @@ public:
       }
     else
       {
-	auto* t = new node (_head, value);
-	_head = t;
+	auto* n = new node (_head, value);
+	_head = n;
       }
-
     ++_size;
   }
 
@@ -68,39 +68,38 @@ public:
 
     if (_head->_value == value)
       {
-	auto* t = _head->_next;
+	auto* n = _head->_next;
 	delete _head;
-	_head = t;
+	_head = n;
       }
     else if (_tail->_value == value)
       {
-	node* current {_head};
+	node* c {_head};
 
-	while (current != nullptr && current->_next != _tail)
-	  current = current->_next;
+	while (c->_next != nullptr && c->_next != _tail)
+	  c = c->_next;
 
-	current->_next = nullptr;
 	delete _tail;
-	_tail = current;
+	c->_next = nullptr;
+	_tail = c;
       }
     else
       {
-	node* previous {_head};
-	node* current  {_head->_next};
+	node* p {nullptr};
+	node* c {_head};
 
-	while (current != nullptr && current->_value != value)
+	while (c != nullptr && c->_value != value)
 	  {
-	    previous = current;
-	    current  = current->_next;
+	    p = c;
+	    c = c->_next;
 	  }
 
-	if (current == nullptr)
+	if (c == nullptr)
 	  return;
 
-	previous->_next = current->_next;
-	delete current;
+	p->_next = c->_next;
+	delete c;
       }
-
     --_size;
   }
 
@@ -110,12 +109,12 @@ public:
     if (empty ())
       return false;
 
-    node* current {_head};
+    node* c {_head};
 
-    while (current != nullptr && current->_value != value)
-      current = current->_next;
+    while (c != nullptr && c->_value != value)
+      c = c->_next;
 
-    return (current != nullptr) ? true : false;
+    return c != nullptr;
   }
 
   void
@@ -124,15 +123,13 @@ public:
     if (empty ())
       return;
 
-    node* current {_head};
+    node* c {_head};
 
-    while (current != nullptr)
+    while (c != nullptr)
       {
-	std::cout << current->_value << ' ';
-	current = current->_next;
+	std::cout << c->_value << ' ';
+	c = c->_next;
       }
-
-    std::cout <<  '\n';
   }
 
   u32
@@ -163,6 +160,164 @@ private:
   node* _tail;
   u32   _size;
 };
+
+// class singly_linked_list final
+// {
+// public:
+//   singly_linked_list ()
+//     : _head {nullptr},
+//       _tail {nullptr},
+//       _size {0}
+//   {}
+
+//   ~singly_linked_list ()
+//   {
+//     node* current {_head};
+
+//     while (current != nullptr)
+//       {
+// 	auto* t = current->_next;
+// 	delete current;
+// 	current = t;
+//       }
+//   }
+
+//   void
+//   append (i32 value)
+//   {
+//     if (empty ())
+//       {
+// 	_head = _tail = new node (nullptr, value);
+//       }
+//     else
+//       {
+// 	auto* t = new node (nullptr, value);
+// 	_tail->_next = t;
+// 	_tail = t;
+//       }
+
+//     ++_size;
+//   }
+
+//   void
+//   prepend (i32 value)
+//   {
+//     if (empty ())
+//       {
+// 	_head = _tail = new node (nullptr, value);
+//       }
+//     else
+//       {
+// 	auto* t = new node (_head, value);
+// 	_head = t;
+//       }
+
+//     ++_size;
+//   }
+
+//   void
+//   remove (i32 value)
+//   {
+//     if (empty ())
+//       return;
+
+//     if (_head->_value == value)
+//       {
+// 	auto* t = _head->_next;
+// 	delete _head;
+// 	_head = t;
+//       }
+//     else if (_tail->_value == value)
+//       {
+// 	node* current {_head};
+
+// 	while (current != nullptr && current->_next != _tail)
+// 	  current = current->_next;
+
+// 	current->_next = nullptr;
+// 	delete _tail;
+// 	_tail = current;
+//       }
+//     else
+//       {
+// 	node* previous {_head};
+// 	node* current  {_head->_next};
+
+// 	while (current != nullptr && current->_value != value)
+// 	  {
+// 	    previous = current;
+// 	    current  = current->_next;
+// 	  }
+
+// 	if (current == nullptr)
+// 	  return;
+
+// 	previous->_next = current->_next;
+// 	delete current;
+//       }
+
+//     --_size;
+//   }
+
+//   bool
+//   contains (i32 value) const
+//   {
+//     if (empty ())
+//       return false;
+
+//     node* current {_head};
+
+//     while (current != nullptr && current->_value != value)
+//       current = current->_next;
+
+//     return (current != nullptr) ? true : false;
+//   }
+
+//   void
+//   display () const
+//   {
+//     if (empty ())
+//       return;
+
+//     node* current {_head};
+
+//     while (current != nullptr)
+//       {
+// 	std::cout << current->_value << ' ';
+// 	current = current->_next;
+//       }
+
+//     std::cout <<  '\n';
+//   }
+
+//   u32
+//   size () const
+//   {
+//     return _size;
+//   }
+
+//   bool
+//   empty () const
+//   {
+//     return size () == 0;
+//   }
+
+// private:
+//   struct node final
+//   {
+//     node (node* next, i32 value)
+//       : _next  {next},
+// 	_value {value}
+//     {}
+
+//     node* _next;
+//     i32 _value;
+//   };
+
+//   node* _head;
+//   node* _tail;
+//   u32   _size;
+// };
 
 int
 main ()

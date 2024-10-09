@@ -4,13 +4,14 @@
 #include <vector>
 #include <string>
 #include <stack>
-
-int constexpr alphabet_size {26};
-
-// only supports lowercase words! no spaces in between!
+#include <cstdint>
 
 template<typename T>
-concept is_std_string = std::is_same_v<T, std::string>;
+concept std_string = std::is_same_v<T, std::string>;
+
+using i32 = std::int32_t;
+
+i32 constexpr alphabet_size {26};
 
 class trie final
 {
@@ -29,29 +30,28 @@ public:
 
     while (! nodes.empty ())
       {
-	auto* current_node = nodes.top ();
+	auto* top = nodes.top ();
 
 	nodes.pop ();
 
-	for (int i = 0; i < current_node->_children.size (); ++i)
+	for (auto*& c : top->_children)
 	  {
-	    if (current_node->_children[i] != nullptr && is_leaf (current_node->_children[i]))
+	    if (c != nullptr && is_leaf (c))
 	      {
-		delete current_node->_children[i];
-		current_node->_children[i] = nullptr;
+		delete c;
 	      }
-	    else if (current_node->_children[i] != nullptr)
+	    else if (c != nullptr)
 	      {
-		nodes.push (current_node->_children[i]);
+		nodes.push (c);
 	      }
 	  }
 
-	delete current_node;
+	delete top;
       }
   }
 
   void
-  insert (is_std_string auto key)
+  insert (std_string auto key)
   {
     if (key.empty ())
       return;
@@ -59,23 +59,23 @@ public:
     if (empty ())
       _root = new node (false);
 
-    node* current_node {_root};
+    node* current {_root};
 
     for (auto const& c : key)
       {
-	int child {c - 'a'};
+	i32 child {c - 'a'};
 
-	if (current_node->_children[child] == nullptr)
-	  current_node->_children[child] = new node (false);
+	if (current->_children[child] == nullptr)
+	  current->_children[child] = new node (false);
 
-	current_node = current_node->_children[child];
+	current = current->_children[child];
       }
 
-    current_node->_finished = true;
+    current->_finished = true;
   }
 
   void
-  remove (is_std_string auto key)
+  remove (std_string auto key)
   {
     if (key.empty () || empty ())
       return;
@@ -85,17 +85,17 @@ public:
 
     for (auto const& c : key)
       {
-	auto* n = nodes.top ();
+	auto* current_node = nodes.top ();
 
-	int child {c - 'a'};
+	i32 child {c - 'a'};
 
-	if (n->_children[child] == nullptr) // the key doesn't exist, so you can exit
+	if (current_node->_children[child] == nullptr)
 	  return;
 
-	nodes.push (n->_children[child]);
+	nodes.push (current_node->_children[child]);
       }
 
-    if (nodes.top ()->_finished == false) // the word is in the dictionary, but it's not register as a word (part of another one maybe?)
+    if (!nodes.top ()->_finished)
       return;
 
     if (! is_leaf (nodes.top ()))
@@ -106,57 +106,57 @@ public:
 
     while (! nodes.empty () && is_leaf (nodes.top ()))
       {
-	auto* child_node = nodes.top ();
+	auto* child = nodes.top ();
 
 	nodes.pop ();
 
 	if (! nodes.empty ())
 	  {
 	    auto* parent = nodes.top ();
-	    int child {key[nodes.size () - 1] - 'a'};
-	    parent->_children[child] = nullptr;
-	    delete child_node;
+	    i32 child_index {key[nodes.size () - 1] - 'a'};
+	    delete child;
+	    parent->_children[child_index] = nullptr;
 	  }
       }
   }
 
   bool
-  contains_key (is_std_string auto key) const
+  contains_key (std_string auto key) const
   {
     if (key.empty () || empty ())
       return false;
 
-    node* current_node {_root};
+    node* current {_root};
 
     for (auto const& c : key)
       {
-	int child {c - 'a'};
+	i32 child {c - 'a'};
 
-	if (current_node->_children[child] == nullptr)
+	if (current->_children[child] == nullptr)
 	  return false;
 
-	current_node = current_node->_children[child];
+	current = current->_children[child];
       }
 
-    return current_node->_finished;
+    return current->_finished == true;
   }
 
   bool
-  contains_prefix (is_std_string auto prefix) const
+  contains_prefix (std_string auto prefix) const
   {
     if (prefix.empty () || empty ())
       return false;
 
-    node* current_node {_root};
+    node* current {_root};
 
     for (auto const& c : prefix)
       {
-	int child {c - 'a'};
+	i32 child {c - 'a'};
 
-	if (current_node->_children[child] == nullptr)
+	if (current->_children[child] == nullptr)
 	  return false;
 
-	current_node = current_node->_children[child];
+	current = current->_children[child];
       }
 
     return true;
@@ -169,50 +169,53 @@ public:
   }
 
   std::vector<std::string>
-  get_words_with_shared_prefix (is_std_string auto prefix)
+  get_words_with_shared_prefix (std_string auto prefix) const
   {
-    if (prefix.empty () || empty ())
-      return {};
+    std::vector<std::string> words;
 
-    std::vector<std::string> shared;
+    if (prefix.empty () || empty ())
+      return words;
+
     node* current {_root};
 
-    for (auto const&  c : prefix)
+    for (auto const& c : prefix)
       {
-	int child {c - 'a'};
+	i32 child {c - 'a'};
 
 	if (current->_children[child] == nullptr)
-	  return {};
+	  return words;
 
 	current = current->_children[child];
       }
 
     std::stack<std::pair<node*, std::string>> nodes;
-    nodes.push (std::make_pair<> (current, prefix));
+    nodes.emplace (std::make_pair (current, prefix));
 
     while (! nodes.empty ())
       {
 	bool is_leaf {true};
 
-	auto node = nodes.top ();
+	auto [current_node, current_str] = nodes.top ();
 
 	nodes.pop ();
 
-	for (int i = 0; i < node.first->_children.size (); ++i)
+	for (i32 i {0}; i < current_node->_children.size (); ++i)
 	  {
-	    if (node.first->_children[i] != nullptr)
+	    if (current_node->_children[i] != nullptr)
 	      {
-		char current = static_cast<char> ('a' + i);
-		nodes.push (make_pair<> (node.first->_children[i], node.second + current));
+		char current_char = static_cast<char> ('a' + i);
+		nodes.emplace (current_node->_children[i], current_str + current_char);
 		is_leaf = false;
 	      }
 	  }
 
-	if (is_leaf && node.first->_finished == true)
-	  shared.emplace_back (node.second);
+	if (is_leaf)
+	  {
+	    words.emplace_back (current_str);
+	  }
       }
 
-    return shared;
+    return words;
   }
 
 private:
@@ -221,7 +224,7 @@ private:
     node (bool finished)
       : _finished {finished}
     {
-      for (auto*& p : _children)
+      for (auto*& p: _children)
 	p = nullptr;
     }
 
@@ -235,8 +238,8 @@ private:
     if (n == nullptr)
       return true;
 
-    for (auto* child : n->_children)
-      if (child != nullptr)
+    for (auto* p : n->_children)
+      if (p != nullptr)
 	return false;
 
     return true;
