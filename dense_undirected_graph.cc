@@ -189,6 +189,60 @@ public:
     return _matrix[source_id][destination_id];
   }
 
+  template<typename T>
+  bool
+  has_cycle_helper (std::unordered_set<std::string>& visited, T&& vertex, T&& parent) const
+  {
+    visited.emplace (std::forward<T> (vertex));
+
+    auto current_vertex_id = _key_to_index.at (std::forward<T> (vertex));
+
+    for (u32 i {}; i < _matrix[current_vertex_id].size (); ++i)
+      {
+	if (_matrix[current_vertex_id][i] == true)
+	  {
+	    auto const& edge = _index_to_key.at (i);
+
+	    if (visited.count (edge) == 0)
+	      {
+		if (has_cycle_helper (visited, edge, vertex))
+		  {
+		    return true;
+		  }
+	      }
+	    else if (edge != parent)
+	      {
+		return true;
+	      }
+	  }
+      }
+
+    return false;
+  }
+
+  bool
+  has_cycle () const
+  {
+    using namespace std::string_literals;
+
+    std::string const empty {""s};
+
+    std::unordered_set<std::string> visited;
+
+    for (auto const& vertex : _vertices)
+      {
+	if (visited.count (vertex) == 0)
+	  {
+	    if (has_cycle_helper (visited, vertex, empty))
+	      {
+		return true;
+	      }
+	  }
+      }
+
+    return false;
+  }
+
 private:
   // TODO: this member variable might not be useful... the confusion
   // arises because what if the vertex is not just a plain string?
@@ -232,6 +286,8 @@ main ()
   assert (graph.has_edge ("1"s, "4"s));
   assert (graph.has_edge ("4"s, "1"s));
 
+  assert (! graph.has_cycle ());
+
   std::cout << "...Printing graph...\n";
 
   std::cout << "...dfs...\n";
@@ -249,6 +305,7 @@ main ()
   dense_undirected_graph graph2 (vertices2);
   assert (! graph2.has_edge ("X"s, "Y"s));
   assert (! graph2.has_edge ("Y"s, "Z"s));
+  assert (! graph2.has_cycle ());
 
   // graph with self edge
   std::vector<std::string> vertices3 = {"P"s, "Q"s, "R"s, "T"s};
@@ -256,6 +313,7 @@ main ()
   graph3.add_edge ("P"s, "Q"s);
   graph3.add_edge ("P"s, "R"s);
   graph3.add_edge ("Q"s, "R"s);
+  assert (graph3.has_cycle ());
 
   assert (graph3.has_edge("P"s, "Q"s));
   assert (graph3.has_edge("P"s, "R"s));
@@ -274,22 +332,36 @@ main ()
   std::vector<std::string> vertices4;
   dense_undirected_graph graph4 (vertices4);
   assert (! graph4.has_edge ("A"s, "B"s)); // don't crash bitch
+  assert (! graph4.has_cycle ());
 
   std::vector<std::string> vertices5 {
     "A"s, "B"s, "C"s, "D"s
   };
 
+  //
+  // some more misc testing...
+  //
   dense_undirected_graph graph5 (vertices5);
 
   graph5.add_edge ("A"s, "B"s);
   graph5.add_edge ("A"s, "C"s);
   graph5.add_edge ("B"s, "D"s);
+  assert (! graph5.has_cycle ());
 
   std::cout << "...Graph 5 dfs...\n";
   graph5.dfs ();
 
   std::cout << "...Graph 5 bfs...\n";
   graph5.bfs ();
+
+  std::vector<std::string> vertices6 {"A"s, "B"s, "C"s};
+  dense_undirected_graph graph6 (vertices6);
+
+  graph6.add_edge ("A"s, "B"s);
+  graph6.add_edge ("B"s, "C"s);
+  graph6.add_edge ("C"s, "A"s);
+
+  assert (graph6.has_cycle ());
 
   std::cout << "All tests passed!\n";
 
