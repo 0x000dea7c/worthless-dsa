@@ -1,13 +1,10 @@
-#include <cstdlib>
-#include <cassert>
 #include <cstdint>
-#include <type_traits>
-#include <string>
-#include <vector>
+#include <cassert>
+#include <iostream>
 #include <unordered_map>
 #include <unordered_set>
-#include <iostream>
-#include <stack>
+#include <vector>
+#include <string>
 #include <queue>
 
 using i32 = std::int32_t;
@@ -15,24 +12,23 @@ using u32 = std::uint32_t;
 
 // assumption: you won't be adding/removing vertices because it's freaking expensive.
 // in fact, you need to pass a vector with every vertex created because fuck it
-class dense_undirected_graph final
+class dense_directed_graph final
 {
 public:
-  dense_undirected_graph (std::vector<std::string>& vertices)
+  dense_directed_graph (std::vector<std::string>& vertices)
     : _vertices {vertices}
   {
     _matrix.resize (_vertices.size (), std::vector<bool> (_vertices.size (), false));
 
     for (u32 i {}; i < _vertices.size (); ++i)
       {
-	_key_to_index[vertices[i]] = i;
-	_index_to_key[i] = vertices[i];
+	_key_to_index[_vertices[i]] = i;
+	_index_to_key[i] = _vertices[i];
       }
   }
 
-  ~dense_undirected_graph ()
-  {
-  }
+  ~dense_directed_graph ()
+  {}
 
   template<typename T>
   void
@@ -48,7 +44,6 @@ public:
     auto destination_id = destination_it->second;
 
     _matrix[source_id][destination_id] = true;
-    _matrix[destination_id][source_id] = true;
   }
 
   template<typename T>
@@ -65,7 +60,6 @@ public:
     auto destination_id = destination_it->second;
 
     _matrix[source_id][destination_id] = false;
-    _matrix[destination_id][source_id] = false;
   }
 
   template<typename T>
@@ -96,22 +90,7 @@ public:
   dfs () const
   {
     //
-    // Don't know about this. Many implementations of DFS have an
-    // argument that indicates the starting point, but that will only
-    // work if the graph is connected. If it's not, DFS won't visit
-    // every vertex.
-    //
-    // Then, surprisingly enough, when investigating implementations
-    // of functions that check if the graph has a cycle, all of sudden
-    // they do take into account that the graph could be disconnected
-    // or not.
-    //
-    // I don't fucking understand. Why? They don't even mention it. So
-    // fucking frustrating.
-    //
-    // I also hate recursion, but it's simpler to implement it this
-    // way. Otherwise the implementation would be too complicated for
-    // an interview... I assume...
+    // @NOTE: read comment on dense_undirected_graph.
     //
     std::unordered_set<std::string> visited;
 
@@ -186,9 +165,10 @@ public:
 
   template<typename T>
   bool
-  has_cycle_helper (std::unordered_set<std::string>& visited, T&& vertex, T&& parent) const
+  has_cycle_helper (std::unordered_set<std::string>& visited, std::unordered_set<std::string>& rec_stack, T&& vertex) const
   {
     visited.emplace (std::forward<T> (vertex));
+    rec_stack.emplace (std::forward<T> (vertex));
 
     auto current_vertex_id = _key_to_index.at (std::forward<T> (vertex));
 
@@ -200,17 +180,19 @@ public:
 
 	    if (visited.count (edge) == 0)
 	      {
-		if (has_cycle_helper (visited, edge, vertex))
+		if (has_cycle_helper (visited, rec_stack, edge))
 		  {
 		    return true;
 		  }
 	      }
-	    else if (edge != parent)
+	    else if (rec_stack.count (edge) > 0)
 	      {
 		return true;
 	      }
 	  }
       }
+
+    rec_stack.erase (vertex);
 
     return false;
   }
@@ -218,17 +200,14 @@ public:
   bool
   has_cycle () const
   {
-    using namespace std::string_literals;
-
-    std::string const empty {""s};
-
     std::unordered_set<std::string> visited;
+    std::unordered_set<std::string> rec_stack;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
 	  {
-	    if (has_cycle_helper (visited, vertex, empty))
+	    if (has_cycle_helper (visited, rec_stack, vertex))
 	      {
 		return true;
 	      }
@@ -250,113 +229,134 @@ private:
   std::vector<std::vector<bool>> _matrix;
 };
 
+
 int
 main ()
 {
   using namespace std::string_literals;
 
-  std::vector<std::string> vertices {
-    "0"s, "1"s, "2"s, "3"s, "4"s, "5"s, "6"s, "7"s
-  };
+  // Test 1: Empty graph
+  {
+    std::vector<std::string> vertices;
+    dense_directed_graph g (vertices);
+    assert (! g.has_cycle ());
+    assert (! g.has_edge("A"s, "B"s));
+  }
 
-  dense_undirected_graph graph (vertices);
+  // Test 2: Single vertex graph
+  {
+    std::vector<std::string> vertices = {"A"s};
+    dense_directed_graph g (vertices);
+    assert (! g.has_cycle ());
+    assert (! g.has_edge ("A"s, "A"s));
+  }
 
-  graph.add_edge ("0"s, "1"s);
-  graph.add_edge ("0"s, "2"s);
-  graph.add_edge ("1"s, "3"s);
-  graph.add_edge ("1"s, "4"s);
-  graph.add_edge ("2"s, "5"s);
-  graph.add_edge ("2"s, "6"s);
-  graph.add_edge ("3"s, "7"s);
+  // Test 3: Two connected components
+  {
+    std::vector<std::string> vertices = {"A"s, "B"s, "C"s, "D"s};
+    dense_directed_graph g (vertices);
 
-  assert (graph.has_edge ("0"s, "1"s));
-  assert (graph.has_edge ("1"s, "0"s));
+    g.add_edge ("A"s, "B"s);
+    g.add_edge ("C"s, "D"s);
 
-  assert (graph.has_edge ("1"s, "3"s));
-  assert (graph.has_edge ("3"s, "1"s));
+    assert(! g.has_cycle ());
 
-  assert (graph.has_edge ("2"s, "6"s));
-  assert (graph.has_edge ("6"s, "2"s));
+    // Check edges
+    assert (g.has_edge ("A"s, "B"s));
+    assert (g.has_edge ("C"s, "D"s));
+    assert (! g.has_edge ("A"s, "C"s));
+    assert (! g.has_edge ("B"s, "D"s));
 
-  assert (graph.has_edge ("1"s, "4"s));
-  assert (graph.has_edge ("4"s, "1"s));
+    // Add cycle
+    g.add_edge ("B"s, "A"s);
+    assert (g.has_cycle ());
 
-  assert (! graph.has_cycle ());
+    // Remove cycle
+    g.remove_edge ("B"s, "A"s);
+    assert (! g.has_cycle());
+  }
 
-  std::cout << "...Printing graph...\n";
+  // Test 4: Multiple cycles
+  {
+    std::vector<std::string> vertices = {"E"s, "F"s, "G"s};
+    dense_directed_graph g (vertices);
 
-  std::cout << "...dfs...\n";
-  graph.dfs ();
+    g.add_edge ("E"s, "F"s);
+    g.add_edge ("F"s, "G"s);
+    g.add_edge ("G"s, "E"s);  // Creates a cycle E -> F -> G -> E
 
-  std::cout << "...bfs...\n";
-  graph.bfs ();
+    assert (g.has_cycle ());
 
-  graph.remove_edge ("A"s, "B"s);
+    g.remove_edge ("E"s, "F"s); // G -> E , F -> G -> E
+    assert(! g.has_cycle ());
+  }
 
-  assert (! graph.has_edge ("A"s, "B"s));
+  // Test 5: Large graph with multiple connected components
+  {
+    std::vector<std::string> vertices = {"X"s, "Y"s, "Z"s, "W"s, "V"s};
+    dense_directed_graph g (vertices);
 
-  // disconnected graph
-  std::vector<std::string> vertices2 = {"X"s, "Y"s, "Z"s};
-  dense_undirected_graph graph2 (vertices2);
-  assert (! graph2.has_edge ("X"s, "Y"s));
-  assert (! graph2.has_edge ("Y"s, "Z"s));
-  assert (! graph2.has_cycle ());
+    g.add_edge ("X"s, "Y"s);
+    g.add_edge ("Y"s, "Z"s);
+    g.add_edge ("Z"s, "W"s);
+    g.add_edge ("W"s, "V"s);
+    g.add_edge ("V"s, "X"s);  // Creates a cycle X -> Y -> Z -> W -> V -> X
 
-  // graph with self edge
-  std::vector<std::string> vertices3 = {"P"s, "Q"s, "R"s, "T"s};
-  dense_undirected_graph graph3 (vertices3);
-  graph3.add_edge ("P"s, "Q"s);
-  graph3.add_edge ("P"s, "R"s);
-  graph3.add_edge ("Q"s, "R"s);
-  assert (graph3.has_cycle ());
+    assert (g.has_cycle ());
 
-  assert (graph3.has_edge("P"s, "Q"s));
-  assert (graph3.has_edge("P"s, "R"s));
-  assert (graph3.has_edge("Q"s, "R"s));
+    assert (g.has_edge ("X"s, "Y"s));
+    assert (g.has_edge ("Z"s, "W"s));
+    assert (g.has_edge ("V"s, "X"s));
 
-  graph3.add_edge ("P"s, "P"s);
-  assert (graph3.has_edge("P"s, "P"s));
+    assert (! g.has_edge("X"s, "Z"s));
+  }
 
-  // this dfs shouldn't show a self-edge (but it's good if you ask)
-  std::cout << "...Printing dfs of graph that has a self edge...\n";
-  graph3.dfs ();
-  std::cout << "...Printing BFS...\n";
-  graph3.bfs ();
+  // Test 6: Edge operations
+  {
+    std::vector<std::string> vertices = {"P"s, "Q"s, "R"s, "S"s};
+    dense_directed_graph g (vertices);
 
-  // empty graph
-  std::vector<std::string> vertices4;
-  dense_undirected_graph graph4 (vertices4);
-  assert (! graph4.has_edge ("A"s, "B"s)); // don't crash bitch
-  assert (! graph4.has_cycle ());
+    g.add_edge ("P"s, "Q"s);
+    g.add_edge ("Q"s, "R"s);
+    g.add_edge ("R"s, "S"s);
 
-  std::vector<std::string> vertices5 {
-    "A"s, "B"s, "C"s, "D"s
-  };
+    assert (g.has_edge ("P"s, "Q"s));
+    assert (g.has_edge ("Q"s, "R"s));
+    assert (g.has_edge ("R"s, "S"s));
+    assert (! g.has_edge ("S"s, "P"s));  // No edge P -> S
 
-  //
-  // some more misc testing...
-  //
-  dense_undirected_graph graph5 (vertices5);
+    // Remove edge
+    g.remove_edge ("P"s, "Q"s);
+    assert (! g.has_edge("P"s, "Q"s));
+  }
 
-  graph5.add_edge ("A"s, "B"s);
-  graph5.add_edge ("A"s, "C"s);
-  graph5.add_edge ("B"s, "D"s);
-  assert (! graph5.has_cycle ());
+  // Test 7: DFS and BFS traversal
+  {
+    std::vector<std::string> vertices = {"T"s, "U"s, "V"s, "W"s};
+    dense_directed_graph g (vertices);
 
-  std::cout << "...Graph 5 dfs...\n";
-  graph5.dfs ();
+    g.add_edge ("T"s, "U"s);
+    g.add_edge ("U"s, "V"s);
+    g.add_edge ("V"s, "W"s);
+    g.add_edge ("W"s, "T"s);  // Creates a cycle T -> U -> V -> W -> T
 
-  std::cout << "...Graph 5 bfs...\n";
-  graph5.bfs ();
+    g.dfs ();
+    g.bfs ();
+  }
 
-  std::vector<std::string> vertices6 {"A"s, "B"s, "C"s};
-  dense_undirected_graph graph6 (vertices6);
+  {
+    // Z <- T -> U -> V -> W
+    std::vector<std::string> vertices = {"T"s, "U"s, "V"s, "W"s, "Z"s};
+    dense_directed_graph g (vertices);
 
-  graph6.add_edge ("A"s, "B"s);
-  graph6.add_edge ("B"s, "C"s);
-  graph6.add_edge ("C"s, "A"s);
+    g.add_edge ("T"s, "Z"s);
+    g.add_edge ("T"s, "U"s);
+    g.add_edge ("U"s, "V"s);
+    g.add_edge ("V"s, "W"s);
 
-  assert (graph6.has_cycle ());
+    g.dfs ();			// This should be: T U V W Z
+    g.bfs ();			// This should be: T U Z V W
+  }
 
   std::cout << "All tests passed!\n";
 
