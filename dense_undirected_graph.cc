@@ -13,26 +13,12 @@
 using i32 = std::int32_t;
 using u32 = std::uint32_t;
 
-// TODO: needs cleanup
-template<typename T>
-concept std_string = std::is_same_v<T, std::string>;
-
-struct vertex final
-{
-  explicit vertex (std_string auto value)
-    : _value {value}
-  {}
-
-  std::string _value;
-};
-
 // assumption: you won't be adding/removing vertices because it's freaking expensive.
 // in fact, you need to pass a vector with every vertex created because fuck it
-// assumption: connected unweighted graph
 class dense_undirected_graph final
 {
 public:
-  dense_undirected_graph (std::vector<vertex*>& vertices)
+  dense_undirected_graph (std::vector<std::string>& vertices)
   {
     if (vertices.empty ())
       return;
@@ -43,24 +29,22 @@ public:
 
     for (u32 i {}; i < size; ++i)
       {
-	auto* v = vertices[i];
-	_vertices[v->_value] = v;
-	_key_to_index[v->_value] = i;
-	_index_to_key[i] = v->_value;
+	_vertices.emplace_back (vertices[i]);
+	_key_to_index[vertices[i]] = i;
+	_index_to_key[i] = vertices[i];
       }
   }
 
   ~dense_undirected_graph ()
   {
-    for (auto& [key, ptr] : _vertices)
-      delete ptr;
   }
 
+  template<typename T>
   void
-  add_edge (std_string auto source, std_string auto destination)
+  add_edge (T&& source, T&& destination)
   {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
+    auto source_it = _key_to_index.find (std::forward<T> (source));
+    auto destination_it = _key_to_index.find (std::forward<T> (destination));
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -72,11 +56,12 @@ public:
     _matrix[destination_id][source_id] = true;
   }
 
+  template<typename T>
   void
-  remove_edge (std_string auto source, std_string auto destination)
+  remove_edge (T&& source, T&& destination)
   {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
+    auto source_it = _key_to_index.find (std::forward<T> (source));
+    auto destination_it = _key_to_index.find (std::forward<T> (destination));
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -84,101 +69,116 @@ public:
     auto source_id = source_it->second;
     auto destination_id = destination_it->second;
 
-    // both ways? idk, im stupid
     _matrix[source_id][destination_id] = false;
     _matrix[destination_id][source_id] = false;
   }
 
+  template<typename T>
   void
-  print () const
+  dfs_helper (std::unordered_set<std::string>& visited, T&& vertex) const
   {
-    for (auto const& [key, data] : _vertices)
-      {
-	auto index = _key_to_index.at (key);
+    visited.emplace (std::forward<T> (vertex));
 
-	for (u32 i {}; i < _matrix[index].size (); ++i)
+    std::cout << std::forward<T> (vertex) << ' ';
+
+    auto id = _key_to_index.at (std::forward<T> (vertex));
+
+    for (u32 i {}; i < _matrix[id].size (); ++i)
+      {
+	if (_matrix[id][i] == true)
 	  {
-	    if (i != index && _matrix[index][i] == true)
+	    auto edge = _index_to_key.at (i);
+
+	    if (visited.count (edge) == 0)
 	      {
-		std::cout << key << ": " << _index_to_key.at (i) <<  '\n';
+		dfs_helper (visited, edge);
 	      }
 	  }
       }
   }
 
   void
-  dfs (std_string auto root) const
+  dfs () const
   {
-    if (_key_to_index.count (root) == 0)
-      return;
-
+    //
+    // Don't know about this. Many implementations of DFS have an
+    // argument that indicates the starting point, but that will only
+    // work if the graph is connected. If it's not, DFS won't visit
+    // every vertex.
+    //
+    // Then, surprisingly enough, when investigating implementations
+    // of functions that check if the graph has a cycle, all of sudden
+    // they do take into account that the graph could be disconnected
+    // or not.
+    //
+    // I don't fucking understand. Why? They don't even mention it. So
+    // fucking frustrating.
+    //
+    // I also hate recursion, but it's simpler to implement it this
+    // way. Otherwise the implementation would be too complicated for
+    // an interview... I assume...
+    //
     std::unordered_set<std::string> visited;
-    std::stack<std::string> nodes;
-    nodes.push (root);
-    visited.emplace (root);
 
-    while (! nodes.empty ())
+    for (auto const& vertex : _vertices)
       {
-	auto key = nodes.top ();
-
-	nodes.pop ();
-
-	std::cout << key << '\n';
-
-	auto key_id = _key_to_index.at (key);
-
-	for (u32 i {}; i < _matrix[key_id].size (); ++i)
+	if (visited.count (vertex) == 0)
 	  {
-	    auto edge_key = _index_to_key.at (i);
-
-	    if (visited.count (edge_key) == 0 && _matrix[key_id][i] == true)
-	      {
-		visited.emplace (edge_key);
-		nodes.push (edge_key);
-	      }
+	    dfs_helper (visited, vertex);
 	  }
       }
+
+    std::cout << '\n';
   }
 
   void
-  bfs (std_string auto root) const
+  bfs () const
   {
-    if (_key_to_index.count (root) == 0)
-      return;
-
     std::unordered_set<std::string> visited;
     std::queue<std::string> nodes;
-    nodes.push (root);
-    visited.emplace (root);
 
-    while (! nodes.empty ())
+    for (auto const& vertex : _vertices)
       {
-	auto key = nodes.front ();
-
-	nodes.pop ();
-
-	std::cout << key << '\n';
-
-	auto key_id = _key_to_index.at (key);
-
-	for (u32 i {}; i < _matrix[key_id].size (); ++i)
+	if (visited.count (vertex) == 0)
 	  {
-	    auto edge_key = _index_to_key.at (i);
+	    visited.emplace (vertex);
+	    nodes.emplace (vertex);
 
-	    if (visited.count (edge_key) == 0 && _matrix[key_id][i] == true)
+	    while (! nodes.empty ())
 	      {
-		visited.emplace (edge_key);
-		nodes.push (edge_key);
+		auto current = nodes.front ();
+		auto id = _key_to_index.at (current);
+
+		std::cout << current << ' ';
+
+		nodes.pop ();
+
+		for (u32 i {}; i < _matrix[id].size (); ++i)
+		  {
+		    if (_matrix[id][i] == true)
+		      {
+			auto edge = _index_to_key.at (i);
+
+			if (visited.count (edge) == 0)
+			  {
+			    visited.emplace (edge);
+			    nodes.emplace (edge);
+			  }
+		      }
+		  }
 	      }
 	  }
       }
+
+    std::cout << '\n';
   }
 
+  template<typename T>
   bool
-  has_edge (std_string auto source, std_string auto destination) const
+  has_edge (T&& source, T&& destination) const
   {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
+    auto source_it = _key_to_index.find (std::forward<T> (source));
+    auto destination_it = _key_to_index.find (std::forward<T> (destination));
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return false;
@@ -190,7 +190,12 @@ public:
   }
 
 private:
-  std::unordered_map<std::string, vertex*> _vertices; // don't know about this, i think this is stupid
+  // TODO: this member variable might not be useful... the confusion
+  // arises because what if the vertex is not just a plain string?
+  // you might want to store the data on one side and the keys in
+  // another?...
+  std::vector<std::string> _vertices;
+
   std::unordered_map<std::string, u32> _key_to_index;
   std::unordered_map<u32, std::string> _index_to_key;
   std::vector<std::vector<bool>> _matrix;
@@ -201,69 +206,90 @@ main ()
 {
   using namespace std::string_literals;
 
-  std::vector<vertex*> vertices;
-  vertices.push_back (new vertex ("A"s));
-  vertices.push_back (new vertex ("B"s));
-  vertices.push_back (new vertex ("C"s));
-  vertices.push_back (new vertex ("D"s));
+  std::vector<std::string> vertices {
+    "0"s, "1"s, "2"s, "3"s, "4"s, "5"s, "6"s, "7"s
+  };
 
   dense_undirected_graph graph (vertices);
 
-  graph.add_edge ("A"s, "B"s);
-  graph.add_edge ("B"s, "C"s);
-  graph.add_edge ("C"s, "D"s);
+  graph.add_edge ("0"s, "1"s);
+  graph.add_edge ("0"s, "2"s);
+  graph.add_edge ("1"s, "3"s);
+  graph.add_edge ("1"s, "4"s);
+  graph.add_edge ("2"s, "5"s);
+  graph.add_edge ("2"s, "6"s);
+  graph.add_edge ("3"s, "7"s);
 
-  assert (graph.has_edge ("A"s, "B"s));
-  assert (graph.has_edge ("B"s, "A"s));
+  assert (graph.has_edge ("0"s, "1"s));
+  assert (graph.has_edge ("1"s, "0"s));
 
-  assert (graph.has_edge ("B"s, "C"s));
-  assert (graph.has_edge ("C"s, "B"s));
+  assert (graph.has_edge ("1"s, "3"s));
+  assert (graph.has_edge ("3"s, "1"s));
 
-  assert (graph.has_edge ("C"s, "D"s));
-  assert (graph.has_edge ("D"s, "C"s));
+  assert (graph.has_edge ("2"s, "6"s));
+  assert (graph.has_edge ("6"s, "2"s));
 
-  assert (graph.has_edge ("C"s, "D"s));
-  assert (graph.has_edge ("D"s, "C"s));
+  assert (graph.has_edge ("1"s, "4"s));
+  assert (graph.has_edge ("4"s, "1"s));
 
-  std::cout << "...Printing all graph...\n";
-  graph.print ();
+  std::cout << "...Printing graph...\n";
 
   std::cout << "...dfs...\n";
-  graph.dfs ("B"s);
+  graph.dfs ();
 
   std::cout << "...bfs...\n";
-  graph.bfs ("B"s);
+  graph.bfs ();
 
   graph.remove_edge ("A"s, "B"s);
 
   assert (! graph.has_edge ("A"s, "B"s));
 
   // disconnected graph
-  std::vector<vertex*> vertices2 = {new vertex ("X"s), new vertex ("Y"s), new vertex ("Z"s)};
+  std::vector<std::string> vertices2 = {"X"s, "Y"s, "Z"s};
   dense_undirected_graph graph2 (vertices2);
   assert (! graph2.has_edge ("X"s, "Y"s));
   assert (! graph2.has_edge ("Y"s, "Z"s));
 
   // graph with self edge
-  std::vector<vertex*> vertices3 = {new vertex ("P"s), new vertex ("Q"s), new vertex ("R"s)};
+  std::vector<std::string> vertices3 = {"P"s, "Q"s, "R"s, "T"s};
   dense_undirected_graph graph3 (vertices3);
   graph3.add_edge ("P"s, "Q"s);
   graph3.add_edge ("P"s, "R"s);
   graph3.add_edge ("Q"s, "R"s);
-  assert(graph3.has_edge("P"s, "Q"s));
-  assert(graph3.has_edge("P"s, "R"s));
-  assert(graph3.has_edge("Q"s, "R"s));
-  graph3.add_edge("P"s, "P"s);
-  assert(graph3.has_edge("P"s, "P"s));
+
+  assert (graph3.has_edge("P"s, "Q"s));
+  assert (graph3.has_edge("P"s, "R"s));
+  assert (graph3.has_edge("Q"s, "R"s));
+
+  graph3.add_edge ("P"s, "P"s);
+  assert (graph3.has_edge("P"s, "P"s));
 
   // this dfs shouldn't show a self-edge (but it's good if you ask)
   std::cout << "...Printing dfs of graph that has a self edge...\n";
-  graph3.dfs ("P"s);
+  graph3.dfs ();
+  std::cout << "...Printing BFS...\n";
+  graph3.bfs ();
 
   // empty graph
-  std::vector<vertex*> vertices4;
+  std::vector<std::string> vertices4;
   dense_undirected_graph graph4 (vertices4);
   assert (! graph4.has_edge ("A"s, "B"s)); // don't crash bitch
+
+  std::vector<std::string> vertices5 {
+    "A"s, "B"s, "C"s, "D"s
+  };
+
+  dense_undirected_graph graph5 (vertices5);
+
+  graph5.add_edge ("A"s, "B"s);
+  graph5.add_edge ("A"s, "C"s);
+  graph5.add_edge ("B"s, "D"s);
+
+  std::cout << "...Graph 5 dfs...\n";
+  graph5.dfs ();
+
+  std::cout << "...Graph 5 bfs...\n";
+  graph5.bfs ();
 
   std::cout << "All tests passed!\n";
 
