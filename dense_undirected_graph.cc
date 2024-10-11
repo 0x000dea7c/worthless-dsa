@@ -31,15 +31,13 @@ public:
   }
 
   ~dense_undirected_graph ()
-  {
-  }
+  {}
 
-  template<typename T>
   void
-  add_edge (T&& source, T&& destination)
+  add_edge (std::string const& source, std::string const& destination)
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -51,12 +49,11 @@ public:
     _matrix[destination_id][source_id] = true;
   }
 
-  template<typename T>
   void
-  remove_edge (T&& source, T&& destination)
+  remove_edge (std::string const& source, std::string const& destination)
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -68,15 +65,14 @@ public:
     _matrix[destination_id][source_id] = false;
   }
 
-  template<typename T>
   void
-  dfs_helper (std::unordered_set<std::string>& visited, T&& vertex) const
+  dfs_helper (std::unordered_set<std::string>& visited, std::string const& vertex) const
   {
-    visited.emplace (std::forward<T> (vertex));
+    visited.emplace (vertex);
 
-    std::cout << std::forward<T> (vertex) << ' ';
+    std::cout << vertex << ' ';
 
-    auto id = _key_to_index.at (std::forward<T> (vertex));
+    auto id = _key_to_index.at (vertex);
 
     for (u32 i {}; i < _matrix[id].size (); ++i)
       {
@@ -168,12 +164,11 @@ public:
     std::cout << '\n';
   }
 
-  template<typename T>
   bool
-  has_edge (T&& source, T&& destination) const
+  has_edge (std::string const& source, std::string const& destination) const
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return false;
@@ -184,13 +179,12 @@ public:
     return _matrix[source_id][destination_id];
   }
 
-  template<typename T>
   bool
-  has_cycle_helper (std::unordered_set<std::string>& visited, T&& vertex, T&& parent) const
+  has_cycle_helper (std::unordered_set<std::string>& visited, std::string const& vertex, std::string const& parent) const
   {
-    visited.emplace (std::forward<T> (vertex));
+    visited.emplace (vertex);
 
-    auto current_vertex_id = _key_to_index.at (std::forward<T> (vertex));
+    auto current_vertex_id = _key_to_index.at (vertex);
 
     for (u32 i {}; i < _matrix[current_vertex_id].size (); ++i)
       {

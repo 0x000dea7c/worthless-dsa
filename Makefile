@@ -31,5 +31,10 @@ string_permutation:
 sparse_directed_graph:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_directed_graph.cc -o sparse_directed_graph
 
+dense_directed_graph:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_directed_graph.cc -o dense_directed_graph
 
-.PHONY: binary_search_tree sparse_undirected_graph dense_undirected_graph doubly_linked_list string_permutation sparse_directed_graph trie singly_linked_list
+.PHONY: binary_search_tree sparse_undirected_graph \
+	dense_undirected_graph doubly_linked_list  \
+	string_permutation sparse_directed_graph   \
+	trie singly_linked_list dense_directed_graph

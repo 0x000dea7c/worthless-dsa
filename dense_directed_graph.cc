@@ -30,12 +30,11 @@ public:
   ~dense_directed_graph ()
   {}
 
-  template<typename T>
   void
-  add_edge (T&& source, T&& destination)
+  add_edge (std::string const& source, std::string const& destination)
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -46,12 +45,11 @@ public:
     _matrix[source_id][destination_id] = true;
   }
 
-  template<typename T>
   void
-  remove_edge (T&& source, T&& destination)
+  remove_edge (std::string const& source, std::string const& destination)
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return;
@@ -62,15 +60,14 @@ public:
     _matrix[source_id][destination_id] = false;
   }
 
-  template<typename T>
   void
-  dfs_helper (std::unordered_set<std::string>& visited, T&& vertex) const
+  dfs_helper (std::unordered_set<std::string>& visited, std::string const& vertex) const
   {
-    visited.emplace (std::forward<T> (vertex));
+    visited.emplace (vertex);
 
-    std::cout << std::forward<T> (vertex) << ' ';
+    std::cout << vertex << ' ';
 
-    auto id = _key_to_index.at (std::forward<T> (vertex));
+    auto id = _key_to_index.at (vertex);
 
     for (u32 i {}; i < _matrix[id].size (); ++i)
       {
@@ -109,23 +106,24 @@ public:
   bfs () const
   {
     std::unordered_set<std::string> visited;
-    std::queue<std::string> nodes;
+    visited.reserve (_vertices.size ());
+    std::queue<std::string> current_vertices;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
 	  {
 	    visited.emplace (vertex);
-	    nodes.emplace (vertex);
+	    current_vertices.emplace (vertex);
 
-	    while (! nodes.empty ())
+	    while (! current_vertices.empty ())
 	      {
-		auto current = nodes.front ();
-		auto id = _key_to_index.at (current);
+		auto current_vertex = current_vertices.front ();
+		auto id = _key_to_index.at (current_vertex);
 
-		std::cout << current << ' ';
+		std::cout << current_vertex << ' ';
 
-		nodes.pop ();
+		current_vertices.pop ();
 
 		for (u32 i {}; i < _matrix[id].size (); ++i)
 		  {
@@ -136,7 +134,7 @@ public:
 			if (visited.count (edge) == 0)
 			  {
 			    visited.emplace (edge);
-			    nodes.emplace (edge);
+			    current_vertices.emplace (edge);
 			  }
 		      }
 		  }
@@ -147,12 +145,11 @@ public:
     std::cout << '\n';
   }
 
-  template<typename T>
   bool
-  has_edge (T&& source, T&& destination) const
+  has_edge (std::string const& source, std::string const& destination) const
   {
-    auto source_it = _key_to_index.find (std::forward<T> (source));
-    auto destination_it = _key_to_index.find (std::forward<T> (destination));
+    auto source_it = _key_to_index.find (source);
+    auto destination_it = _key_to_index.find (destination);
 
     if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
       return false;
@@ -163,14 +160,13 @@ public:
     return _matrix[source_id][destination_id];
   }
 
-  template<typename T>
   bool
-  has_cycle_helper (std::unordered_set<std::string>& visited, std::unordered_set<std::string>& rec_stack, T&& vertex) const
+  has_cycle_helper (std::unordered_set<std::string>& visited, std::unordered_set<std::string>& rec_stack, std::string const& vertex) const
   {
-    visited.emplace (std::forward<T> (vertex));
-    rec_stack.emplace (std::forward<T> (vertex));
+    visited.emplace (vertex);
+    rec_stack.emplace (vertex);
 
-    auto current_vertex_id = _key_to_index.at (std::forward<T> (vertex));
+    auto current_vertex_id = _key_to_index.at (vertex);
 
     for (u32 i {}; i < _matrix[current_vertex_id].size (); ++i)
       {
@@ -228,7 +224,6 @@ private:
   std::unordered_map<u32, std::string> _index_to_key;
   std::vector<std::vector<bool>> _matrix;
 };
-
 
 int
 main ()

@@ -1,211 +1,176 @@
 #include <cassert>
-#include <vector>
+#include <string_view>
 #include <unordered_map>
-#include <string>
-#include <cstdlib>
-#include <cstdint>
+#include <unordered_set>
 #include <algorithm>
 #include <iostream>
-#include <stack>
-#include <unordered_set>
 #include <memory>
+#include <stack>
 #include <queue>
-#include <utility>
-
-using i32 = std::int32_t;
-using u32 = std::uint32_t;
-
-// TODO: needs huge cleanup
-// assumption: it's a connected graph!!!!!!!
-template<typename T>
-concept std_string = std::is_same_v<T, std::string>;
-
-struct vertex final
-{
-  explicit vertex (std_string auto key)
-    : _key {key}
-  {}
-
-  explicit vertex (vertex& v)
-    : _key {v._key}
-  {}
-
-  explicit vertex (vertex&& v)
-    : _key {std::move (v._key)}
-  {}
-
-  std::string _key;
-};
 
 class sparse_undirected_graph final
 {
 public:
   sparse_undirected_graph ()
-  {
-  }
+  {}
 
   ~sparse_undirected_graph ()
+  {}
+
+  void
+  add_vertex (std::string const& value)
   {
+    if (std::find (_vertices.begin (), _vertices.end (), value) != _vertices.end ())
+      return;
+
+    _vertices.emplace_back (value);
+    _list[value] = std::vector<std::string> ();
   }
 
   void
-  add_vertex (vertex&& v)
+  remove_vertex (std::string const& vertex)
   {
-    if (v._key.empty () || _vertices.count (v._key) > 0)
+    if (vertex.empty () || empty ())
       return;
 
-    _vertices[v._key] = std::make_unique<vertex> (v);
-    _list[v._key] = std::unordered_set<std::string> ();
+    std::erase_if (_vertices, [&vertex](std::string const& a) { return vertex == a; });
+
+    for (auto& [_, edges] : _list)
+      std::erase_if (edges, [&vertex](std::string const& a) { return vertex == a; });
+
+    _list.erase (vertex);
   }
 
   void
-  remove_vertex (std_string auto key)
+  add_edge (std::string const& source, std::string const& destination)
   {
-    if (key.empty () || empty () || _vertices.count (key) == 0)
+    if (
+	source.empty () || destination.empty () || empty () ||
+	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end () ||
+	std::find (_list.at (source).begin (), _list.at (source).end (), destination) != _list.at (source).end ()) // ignore dup edges
       return;
 
-    _vertices.erase (key);
-
-    _list.erase (key);
-
-    for (auto& [_, neighbours] : _list)
-      neighbours.erase (key);
+    _list[source].emplace_back (destination);
+    _list[destination].emplace_back (source);
   }
 
   void
-  add_edge (std_string auto source_key, std_string auto destination_key)
+  remove_edge (std::string const& source, std::string const& destination)
   {
-    if (source_key.empty () || destination_key.empty () ||
-	_vertices.count (source_key) == 0 || _vertices.count (destination_key) == 0)
+    if (source.empty () || destination.empty () || empty () ||
+	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
       return;
 
-    // if it's not in one way, it shouldn't be in the other one cause it's undirected
-    _list[source_key].insert (destination_key);
-    _list[destination_key].insert (source_key);
-  }
-
-  void
-  remove_edge (std_string auto source_key, std_string auto destination_key)
-  {
-    if (source_key.empty () || destination_key.empty ())
-      return;
-
-    _list[source_key].erase (destination_key);
-    _list[destination_key].erase (source_key);
-  }
-
-  void
-  print () const
-  {
-    if (empty ())
-      return;
-
-    for (auto const& [key, edges] : _list)
-      {
-	std::cout << key << "->";
-
-	for (auto const& edge_key : edges)
-	  std::cout << edge_key << ' ';
-
-	std::cout << '\n';
-      }
-  }
-
-  void
-  dfs (std_string auto root) const
-  {
-    if (root.empty () || empty ())
-      return;
-
-    if (_vertices.count (root) == 0)
-      return;
-
-    std::unordered_set<std::string> visited;
-    std::stack<std::string> current_vertices;
-    current_vertices.push (root);
-    visited.emplace (root);
-
-    while (! current_vertices.empty ())
-      {
-	auto current = current_vertices.top ();
-
-	current_vertices.pop ();
-
-	std::cout << current << '\n';
-
-	for (auto const& edge : _list.at (current))
-	  {
-	    if (visited.count (edge) == 0)
-	      {
-		visited.emplace (edge);
-		current_vertices.emplace (edge);
-	      }
-	  }
-      }
-  }
-
-  void
-  bfs (std_string auto root) const
-  {
-    if (root.empty () || empty () || _vertices.count (root) == 0)
-      return;
-
-    std::unordered_set<std::string> visited;
-    std::queue<std::string> current_vertices;
-    current_vertices.push (root);
-    visited.emplace (root);
-
-    while (! current_vertices.empty ())
-      {
-	auto current = current_vertices.front ();
-
-	current_vertices.pop ();
-
-	std::cout << current << '\n';
-
-	for (auto const& edge : _list.at (current))
-	  {
-	    if (visited.count (edge) == 0)
-	      {
-		visited.emplace (edge);
-		current_vertices.emplace (edge);
-	      }
-	  }
-      }
+    std::erase_if (_list[source], [&destination](std::string const& a) { return destination == a; });
+    std::erase_if (_list[destination], [&source](std::string const& a) { return source == a; });
   }
 
   bool
   empty () const
   {
-    return _vertices.empty ();
+    return _vertices.size () == 0;
   }
 
   bool
-  has_cycle (std_string auto root) const
+  has_edge (std::string const& source, std::string const& destination) const
   {
-    if (root.empty () || empty () || _vertices.count (root) == 0)
+    if (source.empty () || destination.empty () || empty () ||
+	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
       return false;
 
-    std::unordered_set<std::string> visited;
-    std::stack<std::pair<std::string, std::string>> current_vertices;
-    current_vertices.emplace (std::make_pair<> (root, ""));
-    visited.emplace (root);
+    return std::find (_list.at (source).begin (), _list.at (source).end (), destination) != _list.at (source).end ();
+  }
 
-    while (! current_vertices.empty ())
+  void
+  dfs_helper (std::string const& vertex, std::unordered_set<std::string>& visited) const
+  {
+    visited.emplace (vertex);
+
+    std::cout << vertex << ' ';
+
+    for (auto const& edge : _list.at (vertex))
       {
-	auto [current_vertex, parent_vertex] = current_vertices.top ();
-
-	current_vertices.pop ();
-
-	for (auto const& edge : _list.at (current_vertex))
+	if (visited.count (edge) == 0)
 	  {
-	    if (visited.count (edge) == 0)
+	    dfs_helper (edge, visited);
+	  }
+      }
+  }
+
+  void
+  dfs () const
+  {
+    std::unordered_set<std::string> visited;
+    visited.reserve (_vertices.size ());
+
+    for (auto const& vertex : _vertices)
+      {
+	if (visited.count (vertex) == 0)
+	  {
+	    dfs_helper (vertex, visited);
+	  }
+      }
+
+    std::cout << '\n';
+  }
+
+  void
+  bfs () const
+  {
+    std::unordered_set<std::string> visited;
+    visited.reserve (_vertices.size ());
+    std::queue<std::string> current_vertices;
+
+    for (auto const& vertex : _vertices)
+      {
+	if (visited.count (vertex) == 0)
+	  {
+	    current_vertices.emplace (vertex);
+	    visited.emplace (vertex);
+
+	    while (! current_vertices.empty ())
 	      {
-		visited.emplace (edge);
-		current_vertices.emplace (std::make_pair<> (edge, current_vertex));
+		auto current_vertex = current_vertices.front ();
+
+		current_vertices.pop ();
+
+		std::cout << current_vertex << ' ';
+
+		for (auto const& edge : _list.at (current_vertex))
+		  {
+		    if (visited.count (edge) == 0)
+		      {
+			current_vertices.emplace (edge);
+			visited.emplace (edge);
+		      }
+		  }
 	      }
-	    else if (edge != parent_vertex) // for mf undirected graphs
-	      return true;
+	  }
+      }
+
+    std::cout << '\n';
+  }
+
+  bool
+  has_cycle_helper (std::string const& vertex, std::string const& parent, std::unordered_set<std::string>& visited) const
+  {
+    visited.emplace (vertex);
+
+    for (auto const& edge : _list.at (vertex))
+      {
+	if (visited.count (edge) == 0)
+	  {
+	    if (has_cycle_helper (edge, vertex, visited))
+	      {
+		return true;
+	      }
+	  }
+	else if (edge != parent)
+	  {
+	    return true;
 	  }
       }
 
@@ -213,17 +178,27 @@ public:
   }
 
   bool
-  has_edge (std_string auto source, std_string auto destination) const
+  has_cycle () const
   {
-    if (empty () || source.empty () || destination.empty () || _vertices.count (source) == 0 || _vertices.count (destination) == 0)
-      return false;
+    std::unordered_set<std::string> visited;
 
-    return _list.at (source).count (destination) > 0 && _list.at (destination).count (source) > 0;
+    for (auto const& vertex : _vertices)
+      {
+	if (visited.count (vertex) == 0)
+	  {
+	    if (has_cycle_helper (vertex, "", visited))
+	      {
+		return true;
+	      }
+	  }
+      }
+
+    return false;
   }
 
 private:
-  std::unordered_map<std::string, std::unique_ptr<vertex>> _vertices;
-  std::unordered_map<std::string, std::unordered_set<std::string>> _list;
+  std::vector<std::string> _vertices;
+  std::unordered_map<std::string, std::vector<std::string>> _list;
 };
 
 int
@@ -231,95 +206,189 @@ main ()
 {
   using namespace std::string_literals;
 
-  sparse_undirected_graph graph;
+  {
+    // Connected regular graph with no cycles.
+    sparse_undirected_graph graph;
 
-  // Initial vertices
-  graph.add_vertex (vertex ("A"s));
-  graph.add_vertex (vertex ("B"s));
-  graph.add_vertex (vertex ("C"s));
-  graph.add_vertex (vertex ("D"s));
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_vertex ("C"s);
+    graph.add_vertex ("D"s);
 
-  assert (! graph.empty ());
+    assert (! graph.has_edge ("A"s, "B"s));
+    assert (! graph.has_edge ("B"s, "C"s));
+    assert (! graph.has_edge ("C"s, "D"s));
+    assert (! graph.has_edge ("D"s, "A"s));
+    assert (! graph.has_edge ("F"s, "Z"s));
 
-  // Adding edges
-  graph.add_edge ("A"s, "B"s);
-  graph.add_edge ("B"s, "C"s);
-  graph.add_edge ("C"s, "D"s);
+    // A<->B<->C<->D
+    graph.add_edge ("A"s, "B"s);
+    graph.add_edge ("B"s, "C"s);
+    graph.add_edge ("C"s, "D"s);
 
-  assert (! graph.has_cycle ("A"s));
-  assert (! graph.has_cycle ("B"s));
-  assert (! graph.has_cycle ("C"s));
+    assert (graph.has_edge ("A"s, "B"s));
+    assert (graph.has_edge ("B"s, "A"s));
+    assert (graph.has_edge ("B"s, "C"s));
+    assert (graph.has_edge ("C"s, "B"s));
+    assert (graph.has_edge ("C"s, "D"s));
+    assert (graph.has_edge ("D"s, "C"s));
 
-  std::cout << "Printing all vertices with their edges:\n";
-  graph.print ();
+    assert (! graph.has_cycle ());
 
-  std::cout << "... DFS from B ...\n";
-  graph.dfs ("B"s);
-  std::cout << "... BFS from B ...\n";
-  graph.bfs ("B"s);
+    std::cout << "...Printing DFS... Should be: A B C D\n";
+    graph.dfs ();
 
-  // Test: Adding duplicate vertex
-  std::cout << "Adding duplicate vertex 'A'\n";
-  graph.add_vertex (vertex ("A"s)); // Should not add
+    std::cout << "...Printing BFS... Should be: A B C D\n";
+    graph.bfs ();
+  }
 
-  // Test: Adding duplicate edge
-  std::cout << "Adding duplicate edge A-B\n";
-  graph.add_edge ("A"s, "B"s); // Should not add
+  {
+    // Unconnected regular graph with no cycles.
+    sparse_undirected_graph graph;
 
-  // Test: Removing non-existent vertex
-  std::cout << "Removing non-existent vertex 'E'\n";
-  graph.remove_vertex ("E"s); // Should do nothing
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_vertex ("C"s);
+    graph.add_vertex ("D"s);
+    graph.add_vertex ("X"s);
 
-  // Test: Removing non-existent edge
-  std::cout << "Removing non-existent edge A-C\n";
-  graph.remove_edge ("A"s, "C"s); // Should do nothing
+    graph.add_vertex ("F"s);
+    graph.add_vertex ("G"s);
 
-  // Test: Removing edges and vertices
-  graph.remove_edge ("B"s, "C"s);
-  std::cout << "Printing after removing edge B-C:\n";
-  graph.print ();
+    assert (! graph.has_edge ("A"s, "B"s));
+    assert (! graph.has_edge ("B"s, "C"s));
+    assert (! graph.has_edge ("C"s, "D"s));
+    assert (! graph.has_edge ("D"s, "A"s));
+    assert (! graph.has_edge ("F"s, "Z"s));
 
-  graph.remove_vertex ("D"s);
-  graph.remove_vertex ("A"s);
+    //     X
+    //     ^
+    // A<->B<->C<->D
+    graph.add_edge ("A"s, "B"s);
+    graph.add_edge ("B"s, "C"s);
+    graph.add_edge ("B"s, "X"s);
+    graph.add_edge ("C"s, "D"s);
 
-  std::cout << "Printing vertices with their edges after removing vertices D and A:\n";
-  graph.print ();
+    // F->G
+    graph.add_edge ("F"s, "G"s);
 
-  // Test: Graph should not be empty
-  assert (! graph.empty ());
+    assert (graph.has_edge ("A"s, "B"s));
+    assert (graph.has_edge ("B"s, "A"s));
+    assert (graph.has_edge ("B"s, "C"s));
+    assert (graph.has_edge ("C"s, "B"s));
+    assert (graph.has_edge ("B"s, "X"s));
+    assert (graph.has_edge ("X"s, "B"s));
+    assert (graph.has_edge ("C"s, "D"s));
+    assert (graph.has_edge ("D"s, "C"s));
 
-  // Test: Removing all vertices
-  graph.remove_vertex ("B"s);
-  graph.remove_vertex ("C"s);
+    assert (graph.has_edge ("F"s, "G"s));
+    assert (graph.has_edge ("G"s, "F"s));
 
-  std::cout << "Printing after removing all vertices:\n";
-  graph.print ();
+    assert (! graph.has_cycle ());
 
-  // Test: Graph should be empty
-  assert (graph.empty ());
+    std::cout << "...Printing DFS... Should be: A B C D X F G\n";
+    graph.dfs ();
 
-  // Test: Graph cylce
-  std::cout << "Creating graph with cycle.\n";
-  sparse_undirected_graph graph2;
+    std::cout << "...Printing DFS... Should be: A B C X D F G\n";
+    graph.bfs ();
 
-  graph.add_vertex (vertex ("A"s));
-  graph.add_vertex (vertex ("B"s));
-  graph.add_vertex (vertex ("C"s));
+    // Add a cycle
+    graph.add_edge ("X"s, "A"s);
 
-  graph.add_edge ("A"s, "B"s);
-  graph.add_edge ("B"s, "C"s);
-  graph.add_edge ("C"s, "A"s);
+    assert (graph.has_cycle ());
+  }
 
-  std::cout << "Checking that graph has a cycle.\n";
-  assert (graph.has_cycle ("A"s));
-  assert (graph.has_cycle ("B"s));
-  assert (graph.has_cycle ("C"s));
+  {
+    // Test empty graph
+    sparse_undirected_graph graph;
+    assert (graph.empty());
+    assert (! graph.has_cycle());
+  }
 
-  assert (graph.has_edge ("A"s, "B"s));
-  assert (graph.has_edge ("B"s, "C"s));
-  assert (graph.has_edge ("C"s, "A"s));
+  {
+    // Test adding duplicate vertices
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("A"s); // Duplicate
+    graph.add_vertex ("B"s);
+    assert (! graph.empty());
+    assert (! graph.has_edge("A"s, "B"s));
+  }
 
-  assert (! graph.has_edge ("D"s, "A"s));
+  {
+    // Test adding and removing edges
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_edge ("A"s, "B"s);
+    assert (graph.has_edge ("A"s, "B"s));
+    assert (graph.has_edge ("B"s, "A"s));
+    graph.remove_edge ("A"s, "B"s);
+    assert (! graph.has_edge ("A"s, "B"s));
+    assert (! graph.has_edge ("B"s, "A"s));
+  }
+
+  {
+    // Test removing vertices
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_edge ("A"s, "B"s);
+    graph.remove_vertex ("A"s);
+    assert (! graph.has_edge ("A"s, "B"s));
+    assert (! graph.has_edge ("B"s, "A"s));
+    assert (! graph.has_cycle ());
+  }
+
+  {
+    // Test graph with a cycle
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_vertex ("C"s);
+    graph.add_edge ("A"s, "B"s);
+    graph.add_edge ("B"s, "C"s);
+    graph.add_edge ("C"s, "A"s); // Cycle
+    assert (graph.has_cycle ());
+  }
+
+  {
+    // Test disconnected graph
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_vertex ("B"s);
+    graph.add_vertex ("C"s);
+    graph.add_vertex ("D"s);
+    graph.add_edge ("A"s, "B"s);
+    graph.add_edge ("B"s, "A"s); // duplicate crap, ignore
+    graph.add_edge ("C"s, "D"s);
+    graph.add_edge ("D"s, "C"s); // duplicate crap, ignore
+    // A<->B C<->D
+    assert(! graph.has_edge ("A"s, "C"s));
+    assert(! graph.has_cycle ());
+  }
+
+  {
+    // Test self-loop
+    sparse_undirected_graph graph;
+    graph.add_vertex ("A"s);
+    graph.add_edge ("A"s, "A"s); // Self-loop
+    assert (graph.has_cycle ());
+  }
+
+  {
+    // Test large graph
+    sparse_undirected_graph graph;
+    for (int i = 0; i < 1000; ++i)
+      {
+	graph.add_vertex("V" + std::to_string(i));
+      }
+    for (int i = 0; i < 999; ++i)
+      {
+	graph.add_edge("V" + std::to_string(i), "V" + std::to_string(i + 1));
+      }
+    assert (! graph.has_cycle());
+  }
 
   std::cout << "All tests passed!\n";
 
