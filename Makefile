@@ -38,4 +38,5 @@ dense_directed_graph:
 	dense_undirected_graph doubly_linked_list    \
 	string_permutation sparse_directed_graph     \
 	trie singly_linked_list dense_directed_graph \
-	binary_min_heap
+	binary_min_heap \
+	queue

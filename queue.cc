@@ -11,16 +11,17 @@ using i32 = std::int32_t;
 class queue final
 {
 public:
-  queue (u32 capacity = 8)
-    : _data  {nullptr},
-      _capacity {0},
-      _size  {0},
-      _front {0},
-      _rear  {std::numeric_limits<u32>::max ()}
+  queue (u32 capacity)
+    : _data     {nullptr},
+      _front    {0},
+      _rear     {std::numeric_limits<u32>::max ()},
+      _capacity {capacity},
+      _size     {0}
   {
-    assert (capacity != 0);
-    _capacity = capacity;
-    _data = new i32[_capacity];
+    if (_capacity == 0)
+      throw std::invalid_argument ("Queue's capacity cannot be 0.");
+
+    _data = new i32 [_capacity];
   }
 
   ~queue ()
@@ -29,9 +30,9 @@ public:
   }
 
   void
-  enqueue (int value)
+  enqueue (i32 value)
   {
-    if (_capacity == _size)
+    if (_size == _capacity)
       throw std::runtime_error ("The queue is full");
 
     _rear = (_rear + 1) % _capacity;
@@ -45,7 +46,7 @@ public:
   dequeue ()
   {
     if (empty ())
-      return;
+      throw std::runtime_error ("The queue is empty");
 
     _front = (_front + 1) % _capacity;
 
@@ -56,7 +57,7 @@ public:
   front () const
   {
     if (empty ())
-      throw std::runtime_error ("Queue is empty, cannot get front element");
+      throw std::runtime_error ("The queue is empty");
 
     return _data[_front];
   }
@@ -65,7 +66,7 @@ public:
   rear () const
   {
     if (empty ())
-      throw std::runtime_error ("Queue is empty, cannot get rear element");
+      throw std::runtime_error ("The queue is empty");
 
     return _data[_rear];
   }
@@ -84,77 +85,92 @@ public:
 
 private:
   i32* _data;
-  u32  _capacity;
-  u32  _size;
-  u32  _front;
-  u32  _rear;
+  u32 _front;
+  u32 _rear;
+  u32 _capacity;
+  u32 _size;
 };
 
 int
 main ()
 {
-  queue q (3);
+  {
+    queue q (3);
 
-  // Test 1: Basic Operations
-  q.enqueue (1);
-  q.enqueue (2);
-  q.enqueue (3);
-  assert (q.front () == 1);
-  assert (q.rear () == 3);
+    // Test 1: Basic Operations
+    q.enqueue (1);
+    q.enqueue (2);
+    q.enqueue (3);
+    assert (q.front () == 1);
+    assert (q.rear () == 3);
 
-  // Test 2: Overflow Condition
-  try
-    {
-      q.enqueue (4);
-      assert (false && "can't get here, it needs to overflow");
-    }
-  catch (std::exception const& err)
-    {
-      assert (std::strcmp (err.what (), "The queue is full") == 0);
-    }
+    // Test 2: Overflow Condition
+    try
+      {
+	q.enqueue (4);
+	assert (false && "can't get here, it needs to overflow");
+      }
+    catch (std::exception const& err)
+      {
+	assert (std::strcmp (err.what (), "The queue is full") == 0);
+      }
 
-  // Test 3: Underflow Condition
-  q.dequeue ();
-  q.dequeue ();
-  q.dequeue ();
-  q.dequeue();
+    // Test 3: Underflow Condition
+    q.dequeue ();
+    q.dequeue ();
+    q.dequeue ();
 
-  // Test 4: Wrap-Around Behaviour
-  q.enqueue (4);
-  q.enqueue (5);
-  q.enqueue (6);
-  q.dequeue ();
-  q.enqueue (7);
-  assert (q.front () == 5);
-  assert (q.rear () == 7);
+    try
+      {
+	q.dequeue ();
+	assert (false && "you shouldn't get here");
+      }
+    catch (std::exception const& err)
+      {
+	assert (std::strcmp (err.what (), "The queue is empty") == 0);
+      }
 
-  // Test 5: Check Size Consistency
-  assert (q.size () == 3);
-  q.dequeue ();
-  assert (q.size () == 2);
+    // Test 4: Wrap-Around Behaviour
+    q.enqueue (4);
+    q.enqueue (5);
+    q.enqueue (6);
+    q.dequeue ();
+    q.enqueue (7);
+    assert (q.front () == 5);
+    assert (q.rear () == 7);
 
-  // Test 6: Front and Rear Consistency
-  assert (q.front () == 6);
-  assert (q.rear () == 7);
+    // Test 5: Check Size Consistency
+    assert (q.size () == 3);
+    q.dequeue ();
+    assert (q.size () == 2);
 
-  // Test 7: Edge Case with Single Element
-  queue q2 (1);
-  q2.enqueue (10);
-  assert (q2.front () == 10);
-  assert (q2.rear () == 10);
-  q2.dequeue ();
-  assert (q2.empty ());
+    // Test 6: Front and Rear Consistency
+    assert (q.front () == 6);
+    assert (q.rear () == 7);
+  }
 
-  // Test 8: Large Number of Operations
-  queue q3 (1000);
+  {
+    // Test 7: Edge Case with Single Element
+    queue q (1);
+    q.enqueue (10);
+    assert (q.front () == 10);
+    assert (q.rear () == 10);
+    q.dequeue ();
+    assert (q.empty ());
+  }
 
-  for (int i = 0; i < 1000; ++i)
-    q3.enqueue (i);
+  {
+    // Test 8: Large Number of Operations
+    queue q (1000);
 
-  for (int i = 0; i < 1000; ++i)
-    q3.dequeue ();
+    for (int i = 0; i < 1000; ++i)
+      q.enqueue (i);
 
-  assert (q3.empty ());
+    for (int i = 0; i < 1000; ++i)
+      q.dequeue ();
+
+    assert (q.empty ());
+  }
 
   std::cout << "Test passed!\n";
 
