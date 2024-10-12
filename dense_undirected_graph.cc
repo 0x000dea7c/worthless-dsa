@@ -1,29 +1,24 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstdint>
-#include <type_traits>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
-#include <stack>
 #include <queue>
 
 using i32 = std::int32_t;
-using u32 = std::uint32_t;
 
-// assumption: you won't be adding/removing vertices because it's freaking expensive.
-// in fact, you need to pass a vector with every vertex created because fuck it
 class dense_undirected_graph final
 {
 public:
-  dense_undirected_graph (std::vector<std::string>& vertices)
+  dense_undirected_graph (std::vector<std::string> vertices)
     : _vertices {vertices}
   {
-    _matrix.resize (_vertices.size (), std::vector<bool> (_vertices.size (), false));
+    _matrix.resize (_vertices.size (), std::vector<bool> (vertices.size (), false));
 
-    for (u32 i {}; i < _vertices.size (); ++i)
+    for (i32 i = 0; i < _vertices.size (); ++i)
       {
 	_key_to_index[vertices[i]] = i;
 	_index_to_key[i] = vertices[i];
@@ -31,58 +26,120 @@ public:
   }
 
   ~dense_undirected_graph ()
-  {}
-
-  void
-  add_edge (std::string const& source, std::string const& destination)
   {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
-
-    if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
-      return;
-
-    auto source_id = source_it->second;
-    auto destination_id = destination_it->second;
-
-    _matrix[source_id][destination_id] = true;
-    _matrix[destination_id][source_id] = true;
   }
 
   void
-  remove_edge (std::string const& source, std::string const& destination)
+  add_edge (std::string const& src, std::string const& dst)
   {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
-
-    if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
+    if (src.empty () || dst.empty ())
       return;
 
-    auto source_id = source_it->second;
-    auto destination_id = destination_it->second;
+    auto src_it = _key_to_index.find (src);
 
-    _matrix[source_id][destination_id] = false;
-    _matrix[destination_id][source_id] = false;
+    if (src_it == _key_to_index.end ())
+      return;
+
+    auto dst_it = _key_to_index.find (dst);
+
+    _matrix[src_it->second][dst_it->second] = true;
+    _matrix[dst_it->second][src_it->second] = true;
   }
 
   void
-  dfs_helper (std::unordered_set<std::string>& visited, std::string const& vertex) const
+  remove_edge (std::string const& src, std::string const& dst)
+  {
+    if (src.empty () || dst.empty ())
+      return;
+
+    auto src_it = _key_to_index.find (src);
+
+    if (src_it == _key_to_index.end ())
+      return;
+
+    auto dst_it = _key_to_index.find (dst);
+
+    _matrix[src_it->second][dst_it->second] = false;
+    _matrix[dst_it->second][src_it->second] = false;
+  }
+
+  bool
+  has_edge (std::string const& src, std::string const& dst) const
+  {
+    if (src.empty () || dst.empty ())
+      return false;
+
+    auto src_it = _key_to_index.find (src);
+
+    if (src_it == _key_to_index.end ())
+      return false;
+
+    auto dst_it = _key_to_index.find (dst);
+
+    return _matrix[src_it->second][dst_it->second] && _matrix[dst_it->second][src_it->second];
+  }
+
+  bool
+  has_cycle_helper (std::string const& vertex, std::string const& parent, std::unordered_set<std::string>& visited) const
   {
     visited.emplace (vertex);
 
-    std::cout << vertex << ' ';
+    auto neighbours_id = _key_to_index.at (vertex);
 
-    auto id = _key_to_index.at (vertex);
-
-    for (u32 i {}; i < _matrix[id].size (); ++i)
+    for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
       {
-	if (_matrix[id][i] == true)
+	if (_matrix[neighbours_id][i])
 	  {
 	    auto edge = _index_to_key.at (i);
 
 	    if (visited.count (edge) == 0)
 	      {
-		dfs_helper (visited, edge);
+		if (has_cycle_helper (edge, vertex, visited))
+		  return true;
+	      }
+	    else if (edge != parent)
+	      return true;
+	  }
+      }
+
+    return false;
+  }
+
+  bool
+  has_cycle () const
+  {
+    std::unordered_set<std::string> visited;
+
+    for (auto const& vertex : _vertices)
+      {
+	if (visited.count (vertex) == 0)
+	  {
+	    if (has_cycle_helper (vertex, "", visited))
+	      return true;
+	  }
+      }
+
+    return false;
+  }
+
+  void
+  dfs_helper (std::string const& vertex, std::unordered_set<std::string>& visited) const
+  {
+    visited.emplace (vertex);
+
+    std::cout << vertex << ' ';
+
+    auto neighbours_id = _key_to_index.at (vertex);
+
+    for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
+      {
+	if (_matrix[neighbours_id][i])
+	  {
+	    auto edge = _index_to_key.at (i);
+
+	    if (visited.count (edge) == 0)
+	      {
+		dfs_helper (edge, visited);
 	      }
 	  }
       }
@@ -91,32 +148,12 @@ public:
   void
   dfs () const
   {
-    //
-    // Don't know about this. Many implementations of DFS have an
-    // argument that indicates the starting point, but that will only
-    // work if the graph is connected. If it's not, DFS won't visit
-    // every vertex.
-    //
-    // Then, surprisingly enough, when investigating implementations
-    // of functions that check if the graph has a cycle, all of sudden
-    // they do take into account that the graph could be disconnected
-    // or not.
-    //
-    // I don't fucking understand. Why? They don't even mention it. So
-    // fucking frustrating.
-    //
-    // I also hate recursion, but it's simpler to implement it this
-    // way. Otherwise the implementation would be too complicated for
-    // an interview... I assume...
-    //
     std::unordered_set<std::string> visited;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
-	  {
-	    dfs_helper (visited, vertex);
-	  }
+	  dfs_helper (vertex, visited);
       }
 
     std::cout << '\n';
@@ -126,34 +163,35 @@ public:
   bfs () const
   {
     std::unordered_set<std::string> visited;
-    std::queue<std::string> nodes;
+    std::queue<std::string> current_vertices;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
 	  {
 	    visited.emplace (vertex);
-	    nodes.emplace (vertex);
+	    current_vertices.emplace (vertex);
 
-	    while (! nodes.empty ())
+	    while (! current_vertices.empty ())
 	      {
-		auto current = nodes.front ();
-		auto id = _key_to_index.at (current);
+		auto current_v = current_vertices.front ();
 
-		std::cout << current << ' ';
+		current_vertices.pop ();
 
-		nodes.pop ();
+		std::cout << current_v << ' ';
 
-		for (u32 i {}; i < _matrix[id].size (); ++i)
+		auto neighbours_id = _key_to_index.at (current_v);
+
+		for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
 		  {
-		    if (_matrix[id][i] == true)
+		    if (_matrix[neighbours_id][i])
 		      {
 			auto edge = _index_to_key.at (i);
 
 			if (visited.count (edge) == 0)
 			  {
 			    visited.emplace (edge);
-			    nodes.emplace (edge);
+			    current_vertices.emplace (edge);
 			  }
 		      }
 		  }
@@ -164,83 +202,10 @@ public:
     std::cout << '\n';
   }
 
-  bool
-  has_edge (std::string const& source, std::string const& destination) const
-  {
-    auto source_it = _key_to_index.find (source);
-    auto destination_it = _key_to_index.find (destination);
-
-    if (source_it == _key_to_index.end () || destination_it == _key_to_index.end ())
-      return false;
-
-    auto source_id = source_it->second;
-    auto destination_id = destination_it->second;
-
-    return _matrix[source_id][destination_id];
-  }
-
-  bool
-  has_cycle_helper (std::unordered_set<std::string>& visited, std::string const& vertex, std::string const& parent) const
-  {
-    visited.emplace (vertex);
-
-    auto current_vertex_id = _key_to_index.at (vertex);
-
-    for (u32 i {}; i < _matrix[current_vertex_id].size (); ++i)
-      {
-	if (_matrix[current_vertex_id][i] == true)
-	  {
-	    auto const& edge = _index_to_key.at (i);
-
-	    if (visited.count (edge) == 0)
-	      {
-		if (has_cycle_helper (visited, edge, vertex))
-		  {
-		    return true;
-		  }
-	      }
-	    else if (edge != parent)
-	      {
-		return true;
-	      }
-	  }
-      }
-
-    return false;
-  }
-
-  bool
-  has_cycle () const
-  {
-    using namespace std::string_literals;
-
-    std::string const empty {""s};
-
-    std::unordered_set<std::string> visited;
-
-    for (auto const& vertex : _vertices)
-      {
-	if (visited.count (vertex) == 0)
-	  {
-	    if (has_cycle_helper (visited, vertex, empty))
-	      {
-		return true;
-	      }
-	  }
-      }
-
-    return false;
-  }
-
 private:
-  // TODO: this member variable might not be useful... the confusion
-  // arises because what if the vertex is not just a plain string?
-  // you might want to store the data on one side and the keys in
-  // another?...
   std::vector<std::string> _vertices;
-
-  std::unordered_map<std::string, u32> _key_to_index;
-  std::unordered_map<u32, std::string> _index_to_key;
+  std::unordered_map<std::string, i32> _key_to_index;
+  std::unordered_map<i32, std::string> _index_to_key;
   std::vector<std::vector<bool>> _matrix;
 };
 
