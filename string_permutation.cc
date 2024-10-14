@@ -8,51 +8,21 @@
 
 using u32 = std::uint32_t;
 
-template<typename T>
-concept std_string = std::is_same_v<T, std::string>;
-
-std::vector<std::string>
-permute (std_string auto& str, u32 start, u32 end)
+void
+permute (std::string& str, u32 start, u32 end, std::vector<std::string>& permutations)
 {
-  static std::vector<std::string> permutations;
-
   if (start == end)
-    {
-      permutations.emplace_back (str);
-    }
+    permutations.emplace_back (str);
   else
     {
       for (u32 i {start}; i <= end; ++i)
 	{
 	  std::swap (str[start], str[i]);
-	  permute (str, start + 1, end);
+	  permute (str, start + 1, end, permutations);
 	  std::swap (str[start], str[i]);
 	}
     }
-
-  return permutations;
 }
-
-// this version's pretty good: ~100 lines of assembly aprox (counting std::cout)
-// void
-// permute (std_string auto& str, u32 start, u32 end)
-// {
-//   if (start == end)
-//     {
-//       std::cout << str << '\n';
-//     }
-//   else
-//     {
-//       for (u32 i {start}; i <= end; ++i)
-// 	{
-// 	  std::swap (str[start], str[i]);
-// 	  permute (str, start + 1, end);
-// 	  std::swap (str[start], str[i]);
-// 	}
-//     }
-// }
-
-// TODO: iterative approach that doesn't suck.
 
 int
 main ()
@@ -60,17 +30,18 @@ main ()
   using namespace std::string_literals;
 
   std::string str {"dog"s};
+  std::vector<std::string> permutations;
 
-  auto results = permute (str, 0, str.length () - 1);
+  permute (str, 0, str.length () - 1, permutations);
 
-  std::sort (results.begin (), results.end ());
+  std::sort (permutations.begin (), permutations.end ());
 
-  assert (results[0] == "dgo");
-  assert (results[1] == "dog");
-  assert (results[2] == "gdo");
-  assert (results[3] == "god");
-  assert (results[4] == "odg");
-  assert (results[5] == "ogd");
+  assert (permutations[0] == "dgo");
+  assert (permutations[1] == "dog");
+  assert (permutations[2] == "gdo");
+  assert (permutations[3] == "god");
+  assert (permutations[4] == "odg");
+  assert (permutations[5] == "ogd");
 
   std::cout << "All tests passed!\n";
 

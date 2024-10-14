@@ -18,66 +18,51 @@ public:
   {}
 
   void
-  add_vertex (std::string const& value)
+  add_vertex (std::string const& vertex)
   {
-    if (std::find (_vertices.begin (), _vertices.end (), value) != _vertices.end ())
+    if (vertex.empty () || std::find (_vertices.begin (), _vertices.end (), vertex) != _vertices.end ())
       return;
 
-    _vertices.emplace_back (value);
-    _list[value] = std::vector<std::string> ();
+    _vertices.emplace_back (vertex);
+    _list[vertex] = std::vector<std::string> ();
   }
 
   void
   remove_vertex (std::string const& vertex)
   {
-    if (vertex.empty () || empty ())
+    if (vertex.empty () || empty () || std::find (_vertices.begin (), _vertices.end (), vertex) == _vertices.end ())
       return;
 
-    std::erase_if (_vertices, [&vertex](std::string const& a) { return vertex == a; });
-
-    for (auto& [_, edges] : _list)
-      std::erase_if (edges, [&vertex](std::string const& a) { return vertex == a; });
+    std::erase_if (_vertices, [&vertex] (std::string const& arg) { return arg == vertex; });
 
     _list.erase (vertex);
+
+    for (auto& [_, edges] : _list)
+      {
+	std::erase_if (edges, [&vertex] (std::string const& arg) { return arg == vertex; });
+      }
   }
 
   void
-  add_edge (std::string const& source, std::string const& destination)
+  add_edge (std::string const& src, std::string const& dst)
   {
-    if (source.empty () || destination.empty () || empty () ||
-	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
+    if (src.empty () || dst.empty () || empty () ||
+	std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end () ||
+	std::find (_vertices.begin (), _vertices.end (), dst) == _vertices.end ())
       return;
 
-    _list[source].emplace_back (destination);
+    _list.at (src).emplace_back (dst);
   }
 
   void
-  remove_edge (std::string const& source, std::string const& destination)
+  remove_edge (std::string const& src, std::string const& dst)
   {
-    if (source.empty () || destination.empty () || empty () ||
-	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
+    if (src.empty () || dst.empty () || empty () ||
+	std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end () ||
+	std::find (_vertices.begin (), _vertices.end (), dst) == _vertices.end ())
       return;
 
-    std::erase_if (_list[source], [&destination](std::string const& a) { return destination == a; });
-  }
-
-  bool
-  empty () const
-  {
-    return _vertices.size () == 0;
-  }
-
-  bool
-  has_edge (std::string const& source, std::string const& destination) const
-  {
-    if (source.empty () || destination.empty () || empty () ||
-	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
-      return false;
-
-    return std::find (_list.at (source).begin (), _list.at (source).end (), destination) != _list.at (source).end ();
+    std::erase_if (_list.at (src), [&dst] (std::string const& arg) { return arg == dst; });
   }
 
   void
@@ -100,7 +85,6 @@ public:
   dfs () const
   {
     std::unordered_set<std::string> visited;
-    visited.reserve (_vertices.size ());
 
     for (auto const& vertex : _vertices)
       {
@@ -117,15 +101,14 @@ public:
   bfs () const
   {
     std::unordered_set<std::string> visited;
-    visited.reserve (_vertices.size ());
     std::queue<std::string> current_vertices;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
 	  {
-	    current_vertices.emplace (vertex);
 	    visited.emplace (vertex);
+	    current_vertices.emplace (vertex);
 
 	    while (! current_vertices.empty ())
 	      {
@@ -133,14 +116,14 @@ public:
 
 		current_vertices.pop ();
 
-		std::cout << current_vertex << ' ';
+		std::cout << current_vertex <<  ' ';
 
 		for (auto const& edge : _list.at (current_vertex))
 		  {
 		    if (visited.count (edge) == 0)
 		      {
-			current_vertices.emplace (edge);
 			visited.emplace (edge);
+			current_vertices.emplace (edge);
 		      }
 		  }
 	      }
@@ -151,27 +134,27 @@ public:
   }
 
   bool
-  has_cycle_helper (std::string const& vertex, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& rec_stack) const
+  has_cycle_helper (std::string const& vertex, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& path) const
   {
     visited.emplace (vertex);
-    rec_stack.emplace (vertex);
+    path.emplace (vertex);
 
     for (auto const& edge : _list.at (vertex))
       {
 	if (visited.count (edge) == 0)
 	  {
-	    if (has_cycle_helper (edge, visited, rec_stack))
+	    if (has_cycle_helper (edge, visited, path))
 	      {
 		return true;
 	      }
 	  }
-	else if (rec_stack.count (edge) > 0)
+	else if (path.count (edge) != 0)
 	  {
 	    return true;
 	  }
       }
 
-    rec_stack.erase (vertex);
+    path.erase (vertex);
 
     return false;
   }
@@ -180,26 +163,235 @@ public:
   has_cycle () const
   {
     std::unordered_set<std::string> visited;
-    std::unordered_set<std::string> rec_stack;
+    std::unordered_set<std::string> path;
 
     for (auto const& vertex : _vertices)
       {
 	if (visited.count (vertex) == 0)
 	  {
-	    if (has_cycle_helper (vertex, visited, rec_stack))
-	      {
-		return true;
-	      }
+	    if (has_cycle_helper (vertex, visited, path))
+	      return true;
 	  }
       }
 
     return false;
   }
 
+  bool
+  has_edge (std::string const& src, std::string const& dst) const
+  {
+    if (src.empty () || dst.empty () || empty ())
+      return false;
+
+    if (std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end ())
+      return false;
+
+    return std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ();
+  }
+
+  bool
+  empty () const
+  {
+    return _vertices.empty ();
+  }
+
 private:
   std::vector<std::string> _vertices;
   std::unordered_map<std::string, std::vector<std::string>> _list;
 };
+
+// class sparse_directed_graph final
+// {
+// public:
+//   sparse_directed_graph ()
+//   {}
+
+//   ~sparse_directed_graph ()
+//   {}
+
+//   void
+//   add_vertex (std::string const& value)
+//   {
+//     if (std::find (_vertices.begin (), _vertices.end (), value) != _vertices.end ())
+//       return;
+
+//     _vertices.emplace_back (value);
+//     _list[value] = std::vector<std::string> ();
+//   }
+
+//   void
+//   remove_vertex (std::string const& vertex)
+//   {
+//     if (vertex.empty () || empty ())
+//       return;
+
+//     std::erase_if (_vertices, [&vertex](std::string const& a) { return vertex == a; });
+
+//     for (auto& [_, edges] : _list)
+//       std::erase_if (edges, [&vertex](std::string const& a) { return vertex == a; });
+
+//     _list.erase (vertex);
+//   }
+
+//   void
+//   add_edge (std::string const& source, std::string const& destination)
+//   {
+//     if (source.empty () || destination.empty () || empty () ||
+// 	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+// 	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
+//       return;
+
+//     _list[source].emplace_back (destination);
+//   }
+
+//   void
+//   remove_edge (std::string const& source, std::string const& destination)
+//   {
+//     if (source.empty () || destination.empty () || empty () ||
+// 	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+// 	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
+//       return;
+
+//     std::erase_if (_list[source], [&destination](std::string const& a) { return destination == a; });
+//   }
+
+//   bool
+//   empty () const
+//   {
+//     return _vertices.size () == 0;
+//   }
+
+//   bool
+//   has_edge (std::string const& source, std::string const& destination) const
+//   {
+//     if (source.empty () || destination.empty () || empty () ||
+// 	std::find (_vertices.begin (), _vertices.end (), source) == _vertices.end () ||
+// 	std::find (_vertices.begin (), _vertices.end (), destination) == _vertices.end ())
+//       return false;
+
+//     return std::find (_list.at (source).begin (), _list.at (source).end (), destination) != _list.at (source).end ();
+//   }
+
+//   void
+//   dfs_helper (std::string const& vertex, std::unordered_set<std::string>& visited) const
+//   {
+//     visited.emplace (vertex);
+
+//     std::cout << vertex << ' ';
+
+//     for (auto const& edge : _list.at (vertex))
+//       {
+// 	if (visited.count (edge) == 0)
+// 	  {
+// 	    dfs_helper (edge, visited);
+// 	  }
+//       }
+//   }
+
+//   void
+//   dfs () const
+//   {
+//     std::unordered_set<std::string> visited;
+//     visited.reserve (_vertices.size ());
+
+//     for (auto const& vertex : _vertices)
+//       {
+// 	if (visited.count (vertex) == 0)
+// 	  {
+// 	    dfs_helper (vertex, visited);
+// 	  }
+//       }
+
+//     std::cout << '\n';
+//   }
+
+//   void
+//   bfs () const
+//   {
+//     std::unordered_set<std::string> visited;
+//     visited.reserve (_vertices.size ());
+//     std::queue<std::string> current_vertices;
+
+//     for (auto const& vertex : _vertices)
+//       {
+// 	if (visited.count (vertex) == 0)
+// 	  {
+// 	    current_vertices.emplace (vertex);
+// 	    visited.emplace (vertex);
+
+// 	    while (! current_vertices.empty ())
+// 	      {
+// 		auto current_vertex = current_vertices.front ();
+
+// 		current_vertices.pop ();
+
+// 		std::cout << current_vertex << ' ';
+
+// 		for (auto const& edge : _list.at (current_vertex))
+// 		  {
+// 		    if (visited.count (edge) == 0)
+// 		      {
+// 			current_vertices.emplace (edge);
+// 			visited.emplace (edge);
+// 		      }
+// 		  }
+// 	      }
+// 	  }
+//       }
+
+//     std::cout << '\n';
+//   }
+
+//   bool
+//   has_cycle_helper (std::string const& vertex, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& rec_stack) const
+//   {
+//     visited.emplace (vertex);
+//     rec_stack.emplace (vertex);
+
+//     for (auto const& edge : _list.at (vertex))
+//       {
+// 	if (visited.count (edge) == 0)
+// 	  {
+// 	    if (has_cycle_helper (edge, visited, rec_stack))
+// 	      {
+// 		return true;
+// 	      }
+// 	  }
+// 	else if (rec_stack.count (edge) > 0)
+// 	  {
+// 	    return true;
+// 	  }
+//       }
+
+//     rec_stack.erase (vertex);
+
+//     return false;
+//   }
+
+//   bool
+//   has_cycle () const
+//   {
+//     std::unordered_set<std::string> visited;
+//     std::unordered_set<std::string> rec_stack;
+
+//     for (auto const& vertex : _vertices)
+//       {
+// 	if (visited.count (vertex) == 0)
+// 	  {
+// 	    if (has_cycle_helper (vertex, visited, rec_stack))
+// 	      {
+// 		return true;
+// 	      }
+// 	  }
+//       }
+
+//     return false;
+//   }
+
+// private:
+//   std::vector<std::string> _vertices;
+//   std::unordered_map<std::string, std::vector<std::string>> _list;
+// };
 
 int
 main ()

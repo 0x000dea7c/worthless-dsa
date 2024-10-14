@@ -5,16 +5,17 @@
 #include <iostream>
 
 using i32 = std::int32_t;
+using u32 = std::int32_t;
 
 class binary_min_heap final
 {
 public:
-  binary_min_heap (i32 capacity)
-    : _capacity {capacity},
-      _index {0}
+  binary_min_heap (u32 capacity)
+    : _index    {0},
+      _capacity {capacity},
+      _size     {0}
   {
-    assert (capacity > 0);
-    _data.resize (_capacity);	// DANGEROUS, it's not reserve, it's resize because you need the slots created.
+    _data.resize (_capacity);
   }
 
   ~binary_min_heap ()
@@ -24,20 +25,22 @@ public:
   void
   insert (i32 value)
   {
-    if (_index == _capacity - 1)
+    if (_size + 1 == _capacity)
       {
 	_capacity *= 2;
 	_data.resize (_capacity);
       }
 
-    int hole = ++_index;
-
     _data[0] = value;
+
+    i32 hole = ++_index;
 
     for ( ; _data[0] < _data[hole / 2]; hole /= 2)
       _data[hole] = _data[hole / 2];
 
     _data[hole] = _data[0];
+
+    ++_size;
   }
 
   i32
@@ -58,17 +61,25 @@ public:
     _data[1] = _data[_index--];
 
     percolate_down (1);
+
+    --_size;
+  }
+
+  u32
+  size () const
+  {
+    return _size;
   }
 
   bool
   empty () const
   {
-    return _index == 0;
+    return size () == 0;
   }
 
 private:
   void
-  percolate_down (i32 hole)
+  percolate_down (u32 hole)
   {
     i32 hole_value = _data[hole];
     i32 child;
@@ -77,7 +88,7 @@ private:
       {
 	child = hole * 2;
 
-	if (child != _index && _data[child + 1] < _data[child])
+	if (child != _index && _data[child] > _data[child + 1])
 	  ++child;
 
 	if (_data[child] < _data[hole])
@@ -90,9 +101,99 @@ private:
   }
 
   std::vector<i32> _data;
-  i32 _capacity;
-  i32 _index;
+  u32 _index;
+  u32 _capacity;
+  u32 _size;
 };
+
+
+// class binary_min_heap final
+// {
+// public:
+//   binary_min_heap (i32 capacity)
+//     : _capacity {capacity},
+//       _index {0}
+//   {
+//     assert (capacity > 0);
+//     _data.resize (_capacity);	// DANGEROUS, it's not reserve, it's resize because you need the slots created.
+//   }
+
+//   ~binary_min_heap ()
+//   {
+//   }
+
+//   void
+//   insert (i32 value)
+//   {
+//     if (_index == _capacity - 1)
+//       {
+// 	_capacity *= 2;
+// 	_data.resize (_capacity);
+//       }
+
+//     int hole = ++_index;
+
+//     _data[0] = value;
+
+//     for ( ; _data[0] < _data[hole / 2]; hole /= 2)
+//       _data[hole] = _data[hole / 2];
+
+//     _data[hole] = _data[0];
+//   }
+
+//   i32
+//   get_min () const
+//   {
+//     if (empty ())
+//       return std::numeric_limits<i32>::min ();
+
+//     return _data[1];
+//   }
+
+//   void
+//   delete_min ()
+//   {
+//     if (empty ())
+//       return;
+
+//     _data[1] = _data[_index--];
+
+//     percolate_down (1);
+//   }
+
+//   bool
+//   empty () const
+//   {
+//     return _index == 0;
+//   }
+
+// private:
+//   void
+//   percolate_down (i32 hole)
+//   {
+//     i32 hole_value = _data[hole];
+//     i32 child;
+
+//     for ( ; hole * 2 <= _index; hole *= 2)
+//       {
+// 	child = hole * 2;
+
+// 	if (child != _index && _data[child + 1] < _data[child])
+// 	  ++child;
+
+// 	if (_data[child] < _data[hole])
+// 	  _data[hole] = _data[child];
+// 	else
+// 	  break;
+//       }
+
+//     _data[hole] = hole_value;
+//   }
+
+//   std::vector<i32> _data;
+//   i32 _capacity;
+//   i32 _index;
+// };
 
 int
 main ()
