@@ -9,97 +9,82 @@
 #include <queue>
 
 using i32 = std::int32_t;
+using u32 = std::uint32_t;
 
 class dense_undirected_graph final
 {
 public:
-  dense_undirected_graph (std::vector<std::string> vertices)
-    : _vertices {vertices}
+  dense_undirected_graph (std::vector<std::string>& vertices)
   {
-    _matrix.resize (_vertices.size (), std::vector<bool> (vertices.size (), false));
+    _matrix.resize (vertices.size (), std::vector<bool> (vertices.size (), false));
 
-    for (i32 i = 0; i < _vertices.size (); ++i)
+    for (u32 i {}; i < vertices.size (); ++i)
       {
-	_key_to_index[vertices[i]] = i;
 	_index_to_key[i] = vertices[i];
+	_key_to_index[vertices[i]] = i;
       }
   }
 
-  ~dense_undirected_graph ()
-  {
-  }
+  ~dense_undirected_graph () = default;
 
   void
   add_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty ())
+    if (src.empty () || dst.empty () ||
+	_key_to_index.count (src) == 0 ||
+	_key_to_index.count (dst) == 0)
       return;
 
-    auto src_it = _key_to_index.find (src);
+    auto src_id = _key_to_index.at (src);
+    auto dst_id = _key_to_index.at (dst);
 
-    if (src_it == _key_to_index.end ())
-      return;
-
-    auto dst_it = _key_to_index.find (dst);
-
-    _matrix[src_it->second][dst_it->second] = true;
-    _matrix[dst_it->second][src_it->second] = true;
+    _matrix[src_id][dst_id] = true;
+    _matrix[dst_id][src_id] = true;
   }
 
   void
   remove_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty ())
+    if (src.empty () || dst.empty () ||
+	_key_to_index.count (src) == 0 ||
+	_key_to_index.count (dst) == 0)
       return;
 
-    auto src_it = _key_to_index.find (src);
+    auto src_id = _key_to_index.at (src);
+    auto dst_id = _key_to_index.at (dst);
 
-    if (src_it == _key_to_index.end ())
-      return;
-
-    auto dst_it = _key_to_index.find (dst);
-
-    _matrix[src_it->second][dst_it->second] = false;
-    _matrix[dst_it->second][src_it->second] = false;
+    _matrix[src_id][dst_id] = false;
+    _matrix[dst_id][src_id] = false;
   }
 
   bool
   has_edge (std::string const& src, std::string const& dst) const
   {
-    if (src.empty () || dst.empty ())
+    if (src.empty () || dst.empty () ||
+	_key_to_index.count (src) == 0 ||
+	_key_to_index.count (dst) == 0)
       return false;
 
-    auto src_it = _key_to_index.find (src);
+    auto src_id = _key_to_index.at (src);
+    auto dst_id = _key_to_index.at (dst);
 
-    if (src_it == _key_to_index.end ())
-      return false;
-
-    auto dst_it = _key_to_index.find (dst);
-
-    return _matrix[src_it->second][dst_it->second] && _matrix[dst_it->second][src_it->second];
+    return _matrix[src_id][dst_id];
   }
 
   bool
-  has_cycle_helper (std::string const& vertex, std::string const& parent, std::unordered_set<std::string>& visited) const
+  has_cycle_helper (u32 vertex, u32 parent, std::unordered_set<u32>& visited) const
   {
     visited.emplace (vertex);
 
-    auto neighbours_id = _key_to_index.at (vertex);
-
-    for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
+    for (u32 i {}; i < _matrix[vertex].size (); ++i)
       {
-	if (_matrix[neighbours_id][i])
+	if (_matrix[vertex][i] && visited.count (i) == 0)
 	  {
-	    auto edge = _index_to_key.at (i);
-
-	    if (visited.count (edge) == 0)
-	      {
-		if (has_cycle_helper (edge, vertex, visited))
-		  return true;
-	      }
-	    else if (edge != parent)
+	    if (has_cycle_helper (i, vertex, visited))
 	      return true;
 	  }
+	else if (_matrix[vertex][i] && i != parent)
+	  return true;
       }
 
     return false;
@@ -108,13 +93,13 @@ public:
   bool
   has_cycle () const
   {
-    std::unordered_set<std::string> visited;
+    std::unordered_set<u32> visited;
 
-    for (auto const& vertex : _vertices)
+    for (u32 i {}; i < _matrix.size (); ++i)
       {
-	if (visited.count (vertex) == 0)
+	if (visited.count (i) == 0)
 	  {
-	    if (has_cycle_helper (vertex, "", visited))
+	    if (has_cycle_helper (i, std::numeric_limits<u32>::max (), visited))
 	      return true;
 	  }
       }
@@ -123,24 +108,17 @@ public:
   }
 
   void
-  dfs_helper (std::string const& vertex, std::unordered_set<std::string>& visited) const
+  dfs_helper (u32 vertex, std::unordered_set<u32>& visited) const
   {
     visited.emplace (vertex);
 
-    std::cout << vertex << ' ';
+    std::cout << _index_to_key.at (vertex) << ' ';
 
-    auto neighbours_id = _key_to_index.at (vertex);
-
-    for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
+    for (u32 i {}; i < _matrix[vertex].size (); ++i)
       {
-	if (_matrix[neighbours_id][i])
+	if (_matrix[vertex][i] && visited.count (i) == 0)
 	  {
-	    auto edge = _index_to_key.at (i);
-
-	    if (visited.count (edge) == 0)
-	      {
-		dfs_helper (edge, visited);
-	      }
+	    dfs_helper (i, visited);
 	  }
       }
   }
@@ -148,12 +126,14 @@ public:
   void
   dfs () const
   {
-    std::unordered_set<std::string> visited;
+    std::unordered_set<u32> visited;
 
-    for (auto const& vertex : _vertices)
+    for (u32 i {}; i < _matrix.size (); ++i)
       {
-	if (visited.count (vertex) == 0)
-	  dfs_helper (vertex, visited);
+	if (visited.count (i) == 0)
+	  {
+	    dfs_helper (i, visited);
+	  }
       }
 
     std::cout << '\n';
@@ -162,50 +142,41 @@ public:
   void
   bfs () const
   {
-    std::unordered_set<std::string> visited;
-    std::queue<std::string> current_vertices;
+    std::unordered_set<u32> visited;
+    std::queue<u32> current_vertices;
 
-    for (auto const& vertex : _vertices)
+    for (u32 i {}; i < _matrix.size (); ++i)
       {
-	if (visited.count (vertex) == 0)
+	if (visited.count (i) == 0)
 	  {
-	    visited.emplace (vertex);
-	    current_vertices.emplace (vertex);
+	    visited.emplace (i);
+	    current_vertices.emplace (i);
 
 	    while (! current_vertices.empty ())
 	      {
-		auto current_v = current_vertices.front ();
+		auto current_vertex = current_vertices.front ();
 
 		current_vertices.pop ();
 
-		std::cout << current_v << ' ';
+		std::cout << _index_to_key.at (current_vertex) << ' ';
 
-		auto neighbours_id = _key_to_index.at (current_v);
-
-		for (i32 i {0}; i < _matrix[neighbours_id].size (); ++i)
+		for (u32 j {}; j < _matrix[current_vertex].size (); ++j)
 		  {
-		    if (_matrix[neighbours_id][i])
+		    if (_matrix[current_vertex][j] && visited.count (j) == 0)
 		      {
-			auto edge = _index_to_key.at (i);
-
-			if (visited.count (edge) == 0)
-			  {
-			    visited.emplace (edge);
-			    current_vertices.emplace (edge);
-			  }
+			current_vertices.emplace (j);
+			visited.emplace (j);
 		      }
 		  }
 	      }
 	  }
       }
-
     std::cout << '\n';
   }
 
 private:
-  std::vector<std::string> _vertices;
-  std::unordered_map<std::string, i32> _key_to_index;
-  std::unordered_map<i32, std::string> _index_to_key;
+  std::unordered_map<std::string, u32> _key_to_index;
+  std::unordered_map<u32, std::string> _index_to_key;
   std::vector<std::vector<bool>> _matrix;
 };
 
