@@ -37,10 +37,18 @@ dense_directed_graph:
 bits:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined bits.cc -o bits
 
-.PHONY: binary_search_tree sparse_undirected_graph   \
-	dense_undirected_graph doubly_linked_list    \
-	string_permutation sparse_directed_graph     \
-	trie singly_linked_list dense_directed_graph \
-	binary_min_heap \
-	queue \
-	bits
+primes:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined primes.cc -o primes
+
+.PHONY: binary_search_tree      \
+	sparse_undirected_graph \
+	dense_undirected_graph  \
+	doubly_linked_list      \
+	string_permutation      \
+	sparse_directed_graph   \
+	trie singly_linked_list \
+	dense_directed_graph    \
+	binary_min_heap         \
+	queue                   \
+	bits                    \
+	primes
