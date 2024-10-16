@@ -9,19 +9,14 @@
 class sparse_undirected_graph final
 {
 public:
-  sparse_undirected_graph ()
-  {
-  }
+  sparse_undirected_graph ()  = default;
 
-  ~sparse_undirected_graph ()
-  {
-  }
+  ~sparse_undirected_graph () = default;
 
   void
   add_vertex (std::string const& vertex)
   {
-    if (vertex.empty () ||
-	std::find (_vertices.begin (), _vertices.end (), vertex) != _vertices.end ())
+    if (vertex.empty () || _list.count (vertex) != 0)
       return;
 
     _vertices.emplace_back (vertex);
@@ -31,64 +26,48 @@ public:
   void
   remove_vertex (std::string const& vertex)
   {
-    if (vertex.empty () ||
-	std::find (_vertices.begin (), _vertices.end (), vertex) == _vertices.end ())
+    if (vertex.empty () || _list.count (vertex) == 0)
       return;
 
-    std::erase_if (_vertices, [&vertex] (std::string const& v) { return v == vertex; });
+    std::erase_if (_vertices, [&vertex] (std::string const& arg) { return arg == vertex; });
 
     _list.erase (vertex);
 
     for (auto& [_, neighbours] : _list)
-      {
-	std::erase_if (neighbours, [&vertex] (std::string const& v) { return v == vertex; });
-      }
+      std::erase_if (neighbours, [&vertex] (std::string const& arg) { return arg == vertex; });
   }
 
   void
   add_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty () ||
-	std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), dst) == _vertices.end ())
+    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
       return;
 
-    if (std::find (_list.at (src).begin (), _list.at (src).end (), dst) == _list.at (src).end ())
-      {
-	_list.at (src).emplace_back (dst);
-	_list.at (dst).emplace_back (src);
-      }
+    // no duplicates
+    if (std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ())
+      return;
+
+    _list.at (src).emplace_back (dst);
+    _list.at (dst).emplace_back (src);
   }
 
   void
   remove_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty () ||
-	std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), dst) == _vertices.end ())
+    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
       return;
 
-    if (std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ())
-      {
-	std::erase_if (_list.at (src), [&dst] (std::string const& v) { return v == dst; });
-	std::erase_if (_list.at (dst), [&src] (std::string const& v) { return v == src; });
-      }
+    std::erase_if (_list.at (src), [&dst] (std::string const& arg) { return arg == dst; });
+    std::erase_if (_list.at (dst), [&src] (std::string const& arg) { return arg == src; });
   }
 
   bool
   has_edge (std::string const& src, std::string const& dst) const
   {
-    if (src.empty () || dst.empty () ||
-	std::find (_vertices.begin (), _vertices.end (), src) == _vertices.end () ||
-	std::find (_vertices.begin (), _vertices.end (), dst) == _vertices.end ())
+    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
       return false;
 
-    auto it = std::find (_list.at (src).begin (), _list.at (src).end (), dst);
-
-    if (it != _list.at (src).end ())
-      return true;
-
-    return false;
+    return std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ();
   }
 
   bool
@@ -107,7 +86,9 @@ public:
     for (auto const& edge : _list.at (vertex))
       {
 	if (visited.count (edge) == 0)
-	  dfs_helper (edge, visited);
+	  {
+	    dfs_helper (edge, visited);
+	  }
       }
   }
 
@@ -128,8 +109,8 @@ public:
   void
   bfs () const
   {
-    std::queue<std::string> current_vertices;
     std::unordered_set<std::string> visited;
+    std::queue<std::string> current_vertices;
 
     for (auto const& vertex : _vertices)
       {
@@ -140,25 +121,25 @@ public:
 
 	    while (! current_vertices.empty ())
 	      {
-		auto current_v = current_vertices.front ();
+		auto current_vertex = current_vertices.front ();
 
 		current_vertices.pop ();
 
-		std::cout << current_v << ' ';
+		std::cout << current_vertex << ' ';
 
-		for (auto const& edge : _list.at (current_v))
+		for (auto const& edge : _list.at (current_vertex))
 		  {
 		    if (visited.count (edge) == 0)
 		      {
-			visited.emplace (edge);
 			current_vertices.emplace (edge);
+			visited.emplace (edge);
 		      }
 		  }
 	      }
 	  }
       }
 
-    std::cout << '\n';
+    std::cout <<  '\n';
   }
 
   bool

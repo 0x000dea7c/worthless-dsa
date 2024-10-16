@@ -11,11 +11,11 @@ class binary_min_heap final
 {
 public:
   binary_min_heap (u32 capacity)
-    : _capacity {capacity},
-      _size     {0},
+    : _size     {0},
+      _capacity {capacity},
       _index    {0}
   {
-    _data.resize (capacity);
+    _data.resize (_capacity);
   }
 
   ~binary_min_heap () = default;
@@ -29,9 +29,9 @@ public:
 	_data.resize (_capacity);
       }
 
-    u32 hole = ++_index;
-
     _data[0] = value;
+
+    u32 hole = ++_index;
 
     for ( ; _data[0] < _data[hole / 2]; hole /= 2)
       _data[hole] = _data[hole / 2];
@@ -45,7 +45,7 @@ public:
   get_min () const
   {
     if (empty ())
-      return std::numeric_limits<i32>::min ();
+      return std::numeric_limits<int>::min ();
 
     return _data[1];
   }
@@ -71,7 +71,7 @@ public:
 
 private:
   void
-  percolate_down (i32 hole)
+  percolate_down (u32 hole)
   {
     i32 hole_value = _data[hole];
     u32 child;

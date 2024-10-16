@@ -6,9 +6,6 @@
 #include <stack>
 #include <cstdint>
 
-template<typename T>
-concept std_string = std::is_same_v<T, std::string>;
-
 using i32 = std::int32_t;
 
 i32 constexpr alphabet_size {26};
@@ -30,42 +27,31 @@ public:
 
     while (! nodes.empty ())
       {
-	auto* top = nodes.top ();
+	auto node = nodes.top ();
 
 	nodes.pop ();
 
-	for (auto*& c : top->_children)
-	  {
-	    if (c != nullptr && is_leaf (c))
-	      {
-		delete c;
-	      }
-	    else if (c != nullptr)
-	      {
-		nodes.push (c);
-	      }
-	  }
+	for (int i = 0; i < node->_children.size (); ++i)
+	  if (node->_children[i])
+	    nodes.push (node->_children[i]);
 
-	delete top;
+	delete node;
       }
   }
 
   void
-  insert (std_string auto key)
+  insert (std::string const& key)
   {
-    if (key.empty ())
-      return;
-
-    if (empty ())
+    if (_root == nullptr)
       _root = new node (false);
 
     node* current {_root};
 
     for (auto const& c : key)
       {
-	i32 child {c - 'a'};
+	int child = c - 'a';
 
-	if (current->_children[child] == nullptr)
+	if (!current->_children[child])
 	  current->_children[child] = new node (false);
 
 	current = current->_children[child];
@@ -75,7 +61,7 @@ public:
   }
 
   void
-  remove (std_string auto key)
+  remove (std::string const& key)
   {
     if (key.empty () || empty ())
       return;
@@ -85,17 +71,15 @@ public:
 
     for (auto const& c : key)
       {
-	auto* current_node = nodes.top ();
+	int child = c - 'a';
 
-	i32 child {c - 'a'};
-
-	if (current_node->_children[child] == nullptr)
+	if (! nodes.top ()->_children[child])
 	  return;
 
-	nodes.push (current_node->_children[child]);
+	nodes.push (nodes.top ()->_children[child]);
       }
 
-    if (!nodes.top ()->_finished)
+    if (! nodes.top ()->_finished)
       return;
 
     if (! is_leaf (nodes.top ()))
@@ -106,22 +90,23 @@ public:
 
     while (! nodes.empty () && is_leaf (nodes.top ()))
       {
-	auto* child = nodes.top ();
+	node* child_ptr = nodes.top ();
 
 	nodes.pop ();
 
 	if (! nodes.empty ())
 	  {
-	    auto* parent = nodes.top ();
-	    i32 child_index {key[nodes.size () - 1] - 'a'};
-	    delete child;
-	    parent->_children[child_index] = nullptr;
+	    node* parent = nodes.top ();
+	    int letter = key[nodes.size () - 1];
+	    int child = letter - 'a';
+	    parent->_children[child] = nullptr;
+	    delete child_ptr;
 	  }
       }
   }
 
   bool
-  contains_key (std_string auto key) const
+  contains_key (std::string const& key) const
   {
     if (key.empty () || empty ())
       return false;
@@ -130,9 +115,9 @@ public:
 
     for (auto const& c : key)
       {
-	i32 child {c - 'a'};
+	int child = c - 'a';
 
-	if (current->_children[child] == nullptr)
+	if (!current->_children[child])
 	  return false;
 
 	current = current->_children[child];
@@ -142,7 +127,7 @@ public:
   }
 
   bool
-  contains_prefix (std_string auto prefix) const
+  contains_prefix (std::string const& prefix) const
   {
     if (prefix.empty () || empty ())
       return false;
@@ -151,9 +136,9 @@ public:
 
     for (auto const& c : prefix)
       {
-	i32 child {c - 'a'};
+	int child = c - 'a';
 
-	if (current->_children[child] == nullptr)
+	if (!current->_children[child])
 	  return false;
 
 	current = current->_children[child];
@@ -169,49 +154,47 @@ public:
   }
 
   std::vector<std::string>
-  get_words_with_shared_prefix (std_string auto prefix) const
+  get_words_with_shared_prefix (std::string const& prefix) const
   {
-    std::vector<std::string> words;
-
     if (prefix.empty () || empty ())
-      return words;
+      return {};
 
     node* current {_root};
 
     for (auto const& c : prefix)
       {
-	i32 child {c - 'a'};
+	int child = c - 'a';
 
-	if (current->_children[child] == nullptr)
-	  return words;
+	if (!current->_children[child])
+	  return {};
 
 	current = current->_children[child];
       }
 
-    std::stack<std::pair<node*, std::string>> nodes;
-    nodes.emplace (std::make_pair (current, prefix));
+    std::vector<std::string> words;
+    std::stack<std::pair<node*, std::string>> current_nodes;
+    current_nodes.emplace (std::make_pair (current, prefix));
 
-    while (! nodes.empty ())
+    while (! current_nodes.empty ())
       {
-	bool is_leaf {true};
+	auto [node, str] = current_nodes.top ();
 
-	auto [current_node, current_str] = nodes.top ();
+	current_nodes.pop ();
 
-	nodes.pop ();
-
-	for (i32 i {0}; i < current_node->_children.size (); ++i)
+	if (node->_finished)
 	  {
-	    if (current_node->_children[i] != nullptr)
-	      {
-		char current_char = static_cast<char> ('a' + i);
-		nodes.emplace (current_node->_children[i], current_str + current_char);
-		is_leaf = false;
-	      }
+	    words.emplace_back (str);
 	  }
-
-	if (is_leaf)
+	else
 	  {
-	    words.emplace_back (current_str);
+	    for (int i = 0; i < node->_children.size (); ++i)
+	      {
+		if (node->_children[i])
+		  {
+		    char letter = static_cast<char>('a' + i);
+		    current_nodes.emplace (std::make_pair (node->_children[i], str + letter));
+		  }
+	      }
 	  }
       }
 
@@ -224,7 +207,7 @@ private:
     node (bool finished)
       : _finished {finished}
     {
-      for (auto*& p: _children)
+      for (auto*& p : _children)
 	p = nullptr;
     }
 
@@ -233,13 +216,13 @@ private:
   };
 
   bool
-  is_leaf (node* n) const
+  is_leaf (node* current) const
   {
-    if (n == nullptr)
+    if (!current)
       return true;
 
-    for (auto* p : n->_children)
-      if (p != nullptr)
+    for (int i = 0; i < current->_children.size (); ++i)
+      if (current->_children[i])
 	return false;
 
     return true;
@@ -320,6 +303,7 @@ main ()
 
   auto shared = t3.get_words_with_shared_prefix ("im"s);
   assert (shared.size () == 2);
+
   assert (shared[0] == "imstupid"s);
   assert (shared[1] == "imnot"s);
 

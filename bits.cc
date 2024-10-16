@@ -24,11 +24,17 @@ get_bit (i32 n, u32 bitn)
   return (n & (1 << bitn)) != 0;
 }
 
+// both work!
 u32
 clear_msb_bits_through_bit (i32 n, u32 bitn)
 {
-  return n & ((1 << bitn) - 1);
+  return n & ~(-1 << bitn);
 }
+// u32
+// clear_msb_bits_through_bit (i32 n, u32 bitn)
+// {
+//   return n & ((1 << bitn) - 1);
+// }
 
 u32
 clear_all_bits_through_end (i32 n, u32 bitn)
@@ -40,7 +46,6 @@ clear_all_bits_through_end (i32 n, u32 bitn)
 u32
 update_bit (i32 n, u32 bitn, u32 bit_value)
 {
-  // first clear the bit, then update
   bit_value = (bit_value == 0) ? 0 : 1;
   i32 mask = ~(1 << bitn);
   return (n & mask) | (bit_value << bitn);
