@@ -1,2 +1,3 @@
 - investigate optimisation of sieve of eratosthenes
 - improve tests for queues, binary min heap, and perhaps some more
+- add hash map implementation

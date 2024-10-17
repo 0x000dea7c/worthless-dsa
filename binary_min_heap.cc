@@ -12,9 +12,12 @@ class binary_min_heap final
 public:
   binary_min_heap (u32 capacity)
     : _size     {0},
-      _capacity {capacity},
-      _index    {0}
+      _index    {0},
+      _capacity {capacity}
   {
+    if (_capacity == 0)
+      throw std::runtime_error ("capacity is 0");
+
     _data.resize (_capacity);
   }
 
@@ -23,7 +26,7 @@ public:
   void
   insert (i32 value)
   {
-    if (_size + 1 == _capacity)
+    if (_capacity == _size + 1)
       {
 	_capacity *= 2;
 	_data.resize (_capacity);
@@ -45,22 +48,9 @@ public:
   get_min () const
   {
     if (empty ())
-      return std::numeric_limits<int>::min ();
+      throw std::runtime_error ("container is empty");
 
     return _data[1];
-  }
-
-  void
-  delete_min ()
-  {
-    if (empty ())
-      return;
-
-    _data[1] = _data[_index--];
-
-    percolate_down (1);
-
-    --_size;
   }
 
   bool
@@ -69,14 +59,27 @@ public:
     return _size == 0;
   }
 
+  void
+  delete_min ()
+  {
+    if (empty ())
+      throw std::runtime_error ("container is empty");
+
+    _data[1] = _data[_index--];
+
+    percolate_down (1);
+
+    --_size;
+  }
+
 private:
   void
   percolate_down (u32 hole)
   {
     i32 hole_value = _data[hole];
-    u32 child;
+    i32 child;
 
-    for ( ; hole <= _index; hole *= 2)
+    for ( ; hole * 2 <= _index; hole *= 2)
       {
 	child = hole * 2;
 
@@ -92,57 +95,94 @@ private:
     _data[hole] = hole_value;
   }
 
+
   std::vector<i32> _data;
   u32 _size;
-  u32 _capacity;
   u32 _index;
+  u32 _capacity;
 };
 
 int
 main ()
 {
-  // Test 1: Basic insertion and get_min
-  binary_min_heap h1 (10);
-  h1.insert (5);
-  h1.insert (3);
-  h1.insert (8);
-  h1.insert (1);
-  h1.insert (9);
-  assert (h1.get_min () == 1);
+  {
+    // Test 1: Basic insertion and get_min
+    binary_min_heap heap (10);
+    heap.insert (5);
+    heap.insert (3);
+    heap.insert (8);
+    heap.insert (1);
+    heap.insert (9);
+    assert (heap.get_min () == 1);
+  }
 
-  // Test 2: Deletion of minimum
-  h1.delete_min ();
-  assert (h1.get_min() == 3);
-  h1.delete_min ();
-  assert (h1.get_min() == 5);
+  {
+    // Test 2: Insertion and deletion
+    binary_min_heap heap (10);
+    heap.insert (5);
+    heap.insert (9);
+    heap.insert (1);
 
-  // Test 3: Empty heap
-  binary_min_heap h2 (10);
+    assert (heap.get_min () == 1);
 
-  // Test 4: Large number of insertions
-  binary_min_heap h3 (10);
-  for (int i = 1000; i > 0; --i)
-    h3.insert (i);
+    heap.delete_min ();
 
-  assert (h3.get_min () == 1);
+    assert (heap.get_min () == 5);
 
-  // Test 5: Duplicate elements
-  binary_min_heap h4 (10);
-  h4.insert (5);
-  h4.insert (3);
-  h4.insert (3);
-  h4.insert (1);
-  h4.insert (1);
-  assert(h4.get_min () == 1);
-  h4.delete_min ();
-  assert(h4.get_min () == 1);
+    heap.delete_min ();
 
-  // Test 6: Single element
-  binary_min_heap h5 (10);
-  h5.insert (42);
-  assert (h5.get_min () == 42);
-  h5.delete_min ();
-  assert (h5.empty ());
+    assert (heap.get_min () == 9);
+  }
+
+  {
+    // Test 3: empty and exception is thrown
+    try
+      {
+	binary_min_heap heap (0);
+	assert (false && "can't get here cuz exception will be thrown");
+      }
+    catch (std::runtime_error const&)
+      {
+      }
+  }
+
+  {
+    // Test 4: Large number of insertions, test resize
+    binary_min_heap heap (10);
+
+    for (int i = 1000; i > 0; --i)
+      heap.insert (i);
+
+    assert (heap.get_min () == 1);
+  }
+
+  {
+    // Test 5: Duplicate elements (supported)
+    binary_min_heap heap (10);
+    heap.insert (5);
+    heap.insert (3);
+    heap.insert (3);
+    heap.insert (1);
+    heap.insert (1);
+
+    assert (heap.get_min () == 1);
+
+    heap.delete_min ();
+
+    assert (heap.get_min () == 1);
+  }
+
+  {
+    // Test 6: Single element
+    binary_min_heap heap (10);
+    heap.insert (42);
+
+    assert (heap.get_min () == 42);
+
+    heap.delete_min ();
+
+    assert (heap.empty ());
+  }
 
   std::cout << "All tests passed!\n";
 }

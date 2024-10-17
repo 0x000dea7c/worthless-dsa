@@ -7,53 +7,19 @@
 
 using u32 = std::uint32_t;
 
-// static void
-// cross_off (u32 prime, std::vector<bool>& crossed)
-// {
-//   for (u32 i = prime * prime; i < crossed.size (); i += prime)
-//     crossed[i] = false;
-// }
-
-// static u32
-// get_next_prime (u32 prime, std::vector<bool>& crossed)
-// {
-//   u32 next = prime + 1;
-
-//   while (next < crossed.size () && !crossed[next])
-//     ++next;
-
-//   return next;
-// }
-
-// std::vector<bool>
-// sieve_of_eratosthenes (u32 max)
-// {
-//   std::vector<bool> crossed (max + 1, true);
-//   crossed[0] = crossed[1] = false; // 0 and 1 are not primes
-//   u32 prime = 2;
-
-//   while (prime <= std::sqrt (max))
-//     {
-//       cross_off (prime, crossed);
-//       prime = get_next_prime (prime, crossed);
-//     }
-
-//   return crossed;
-// }
-
 static void
-cross_off (u32 prime, std::vector<bool>& crossed)
+cross_off (u32 prime, std::vector<bool>& primes)
 {
-  for (u32 i = prime * prime; i < crossed.size (); i += prime)
-    crossed[i] = false;
+  for (u32 i = prime * prime; i < primes.size (); i += prime)
+    primes[i] = false;
 }
 
 static u32
-find_next_prime (u32 prime, std::vector<bool>& crossed)
+get_next_prime (u32 prime, std::vector<bool>& primes)
 {
-  prime = prime + 1;
+  ++prime;
 
-  while (prime < crossed.size () && !crossed[prime])
+  while (prime < primes.size () && !primes[prime])
     ++prime;
 
   return prime;
@@ -62,17 +28,18 @@ find_next_prime (u32 prime, std::vector<bool>& crossed)
 std::vector<bool>
 sieve_of_eratosthenes (u32 max)
 {
-  std::vector<bool> crossed (max + 1, true);
-  crossed[0] = crossed[1] = false;
+  std::vector<bool> primes (max + 1, true);
+  primes[0] = primes[1] = false;
   u32 prime = 2;
+  u32 limit = std::sqrt (max);
 
-  while (prime <= std::sqrt (max))
+  while (prime <= limit)
     {
-      cross_off (prime, crossed);
-      prime = find_next_prime (prime, crossed);
+      cross_off (prime, primes);
+      prime = get_next_prime (prime, primes);
     }
 
-  return crossed;
+  return primes;
 }
 
 int
