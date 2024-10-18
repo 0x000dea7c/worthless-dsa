@@ -40,6 +40,10 @@ bits:
 primes:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined primes.cc -o primes
 
+singleton:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singleton.cc -o singleton
+
+
 .PHONY: binary_search_tree      \
 	sparse_undirected_graph \
 	dense_undirected_graph  \
@@ -51,4 +55,5 @@ primes:
 	binary_min_heap         \
 	queue                   \
 	bits                    \
-	primes
+	primes                  \
+	singleton
