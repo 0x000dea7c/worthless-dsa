@@ -7,19 +7,19 @@
 
 using u32 = std::uint32_t;
 
-static void
-cross_off (u32 prime, std::vector<bool>& primes)
+void
+cross_off (u32 prime, std::vector<bool>& crossed)
 {
-  for (u32 i = prime * prime; i < primes.size (); i += prime)
-    primes[i] = false;
+  for (u32 i = prime * prime; i < crossed.size (); i += prime)
+    crossed[i] = false;
 }
 
-static u32
-get_next_prime (u32 prime, std::vector<bool>& primes)
+u32
+get_next_prime (u32 prime, std::vector<bool>& crossed)
 {
   ++prime;
 
-  while (prime < primes.size () && !primes[prime])
+  while (prime < crossed.size () && !crossed[prime])
     ++prime;
 
   return prime;
@@ -28,18 +28,17 @@ get_next_prime (u32 prime, std::vector<bool>& primes)
 std::vector<bool>
 sieve_of_eratosthenes (u32 max)
 {
-  std::vector<bool> primes (max + 1, true);
-  primes[0] = primes[1] = false;
+  std::vector<bool> crossed (max + 1, true);
+  crossed[0] = crossed[1] = false;
   u32 prime = 2;
-  u32 limit = std::sqrt (max);
 
-  while (prime <= limit)
+  while (prime <= std::sqrt (max))
     {
-      cross_off (prime, primes);
-      prime = get_next_prime (prime, primes);
+      cross_off (prime, crossed);
+      prime = get_next_prime (prime, crossed);
     }
 
-  return primes;
+  return crossed;
 }
 
 int

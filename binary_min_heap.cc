@@ -11,14 +11,13 @@ class binary_min_heap final
 {
 public:
   binary_min_heap (u32 capacity)
-    : _size     {0},
-      _index    {0},
-      _capacity {capacity}
+    : _size  {0},
+      _index {0}
   {
-    if (_capacity == 0)
+    if (capacity == 0)
       throw std::runtime_error ("capacity is 0");
 
-    _data.resize (_capacity);
+    _data.resize (capacity);
   }
 
   ~binary_min_heap () = default;
@@ -26,10 +25,10 @@ public:
   void
   insert (i32 value)
   {
-    if (_capacity == _size + 1)
+    if (_size + 1 == _data.capacity ())
       {
-	_capacity *= 2;
-	_data.resize (_capacity);
+	auto cap = _data.capacity ();
+	_data.resize (cap * 2);
       }
 
     _data[0] = value;
@@ -48,28 +47,34 @@ public:
   get_min () const
   {
     if (empty ())
-      throw std::runtime_error ("container is empty");
+      throw std::runtime_error ("heap is empty");
 
     return _data[1];
-  }
-
-  bool
-  empty () const
-  {
-    return _size == 0;
   }
 
   void
   delete_min ()
   {
     if (empty ())
-      throw std::runtime_error ("container is empty");
+      throw std::runtime_error ("heap is empty");
 
     _data[1] = _data[_index--];
 
     percolate_down (1);
 
     --_size;
+  }
+
+  bool
+  empty () const
+  {
+    return size () == 0;
+  }
+
+  u32
+  size () const
+  {
+    return _size;
   }
 
 private:
@@ -95,11 +100,9 @@ private:
     _data[hole] = hole_value;
   }
 
-
   std::vector<i32> _data;
   u32 _size;
   u32 _index;
-  u32 _capacity;
 };
 
 int

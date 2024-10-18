@@ -48,7 +48,7 @@ update_bit (i32 n, u32 bitn, u32 bit_value)
 {
   bit_value = (bit_value == 0) ? 0 : 1;
   i32 mask = ~(1 << bitn);
-  return (n & mask) | (bit_value << bitn);
+  return n & mask | (bit_value << bitn);
 }
 
 int
