@@ -43,6 +43,8 @@ primes:
 singleton:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singleton.cc -o singleton
 
+factory:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined factory.cc -o factory
 
 .PHONY: binary_search_tree      \
 	sparse_undirected_graph \
@@ -56,4 +58,5 @@ singleton:
 	queue                   \
 	bits                    \
 	primes                  \
-	singleton
+	singleton		\
+	factory
