@@ -8,11 +8,13 @@
 class audio_manager final
 {
 public:
-  audio_manager  (audio_manager& other) = delete;
-  void operator= (audio_manager& other) = delete;
+  audio_manager (audio_manager const&) = delete;
+  audio_manager& operator= (audio_manager const&) = delete;
 
-  audio_manager  (audio_manager&& other) = delete;
-  void operator= (audio_manager&& other) = delete;
+  audio_manager (audio_manager&&) = delete;
+  audio_manager& operator= (audio_manager&&) = delete;
+
+  ~audio_manager () = default;
 
   static audio_manager&
   get_instance ()
@@ -28,7 +30,7 @@ public:
   }
 
 private:
-  audio_manager () = default;
+  audio_manager() = default;
 };
 
 int

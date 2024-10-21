@@ -46,6 +46,9 @@ singleton:
 factory:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined factory.cc -o factory
 
+observer:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined observer.cc -o observer
+
 .PHONY: binary_search_tree      \
 	sparse_undirected_graph \
 	dense_undirected_graph  \
@@ -59,4 +62,5 @@ factory:
 	bits                    \
 	primes                  \
 	singleton		\
-	factory
+	factory			\
+	observer

@@ -7,14 +7,14 @@
 
 using u32 = std::uint32_t;
 
-void
+static void
 cross_off (u32 prime, std::vector<bool>& crossed)
 {
   for (u32 i = prime * prime; i < crossed.size (); i += prime)
     crossed[i] = false;
 }
 
-u32
+static u32
 get_next_prime (u32 prime, std::vector<bool>& crossed)
 {
   ++prime;
