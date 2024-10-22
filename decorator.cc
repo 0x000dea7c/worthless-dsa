@@ -30,7 +30,7 @@
 // .................................... pretty fucking bad, isn't it?
 //
 // The idea of the decorator pattern is to add responsibilities or
-// functionality at dynamic or static time to an INDIVIDUAL object.
+// functionality dynamically or statically to an INDIVIDUAL object.
 // You can do this by wrapping the original object in a decorator
 // object that adds the new funcionality.
 //
@@ -68,12 +68,6 @@ public:
   notifier_decorator (std::unique_ptr<notifier> notifier)
     : _notifier {std::move (notifier)}
   {}
-
-  virtual void
-  send (std::string const& message) override
-  {
-    _notifier->send (message);
-  }
 };
 
 class email_notifier_decorator final : public notifier_decorator
