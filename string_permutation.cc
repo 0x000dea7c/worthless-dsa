@@ -12,7 +12,9 @@ void
 permute (std::string& str, u32 start, u32 end, std::vector<std::string>& permutations)
 {
   if (start == end)
-    permutations.emplace_back (str);
+    {
+      permutations.emplace_back (str);
+    }
   else
     {
       for (u32 i {start}; i <= end; ++i)

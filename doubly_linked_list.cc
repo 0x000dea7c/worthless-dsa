@@ -22,9 +22,9 @@ public:
 
     while (current)
       {
-	auto* next = current->_next;
-	delete current;
-	current = next;
+        auto* n = current->_next;
+        delete current;
+        current = n;
       }
   }
 
@@ -33,13 +33,14 @@ public:
   {
     if (empty ())
       {
-	_head = _tail = new node (nullptr, nullptr, value);
+        _head = _tail = new node (nullptr, nullptr, value);
       }
     else
       {
-	_tail->_next = new node (_tail, nullptr, value);
-	_tail = _tail->_next;
+        _tail->_next = new node (_tail, nullptr, value);
+        _tail = _tail->_next;
       }
+
     ++_size;
   }
 
@@ -48,14 +49,14 @@ public:
   {
     if (empty ())
       {
-	_head = _tail = new node (nullptr, nullptr, value);
+        _head = _tail = new node (nullptr, nullptr, value);
       }
     else
       {
-	auto* new_node = new node (nullptr, _head, value);
-	_head->_prev = new_node;
-	_head = new_node;
+        _head->_prev = new node (nullptr, _head, value);
+        _head = _head->_prev;
       }
+
     ++_size;
   }
 
@@ -67,34 +68,48 @@ public:
 
     if (_head->_value == value)
       {
-	auto* next = _head->_next;
-	if (next)
-	  next->_prev = nullptr;
-	delete _head;
-	_head = next;
+        auto* tmp = _head->_next;
+        delete _head;
+
+        if (tmp)
+          {
+            tmp->_prev = nullptr;
+          }
+
+        _head = tmp;
       }
     else if (_tail->_value == value)
       {
-	auto* prev = _tail->_prev;
-	if (prev)
-	  prev->_next = nullptr;
-	delete _tail;
-	_tail = prev;
+        auto* tmp = _tail->_prev;
+        delete _tail;
+
+        if (tmp)
+          {
+            tmp->_next = nullptr;
+          }
+
+        _tail = tmp;
       }
     else
       {
-	node* current {_head->_next};
+        node* current {_head->_next};
 
-	while (current && current->_value != value)
-	  current = current->_next;
+        while (current && current->_value != value)
+          {
+            current = current->_next;
+          }
 
-	if (!current)
-	  return;
+        if (!current)
+          {
+            return;
+          }
 
-	current->_prev->_next = current->_next;
-	current->_next->_prev = current->_prev;
-	delete current;
+        current->_prev->_next = current->_next;
+        current->_next->_prev = current->_prev;
+
+        delete current;
       }
+
     --_size;
   }
 
@@ -102,12 +117,18 @@ public:
   contains (i32 value) const
   {
     if (empty ())
-      return false;
+      {
+        return false;
+      }
 
     if (_head->_value == value)
-      return true;
+      {
+        return true;
+      }
     else if (_tail->_value == value)
-      return true;
+      {
+        return true;
+      }
 
     node* current {_head->_next};
 
@@ -124,9 +145,11 @@ public:
 
     while (current)
       {
-	std::cout << current->_value << ' ';
-	current = current->_next;
+        std::cout << current->_value << ' ';
+        current = current->_next;
       }
+
+    std::cout << '\n';
   }
 
   u32
@@ -144,13 +167,6 @@ public:
 private:
   struct node final
   {
-    node (node* prev, node* next, i32 value)
-      : _prev  {prev},
-	_next  {next},
-	_value {value}
-    {
-    }
-
     node* _prev;
     node* _next;
     i32 _value;
