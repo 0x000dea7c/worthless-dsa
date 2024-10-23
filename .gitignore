@@ -16,3 +16,4 @@ singleton
 factory
 observer
 decorator
+strategy

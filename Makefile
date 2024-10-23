@@ -52,6 +52,9 @@ observer:
 decorator:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined decorator.cc -o decorator
 
+strategy:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined strategy.cc -o strategy
+
 .PHONY: binary_search_tree      \
 	sparse_undirected_graph \
 	dense_undirected_graph  \
@@ -67,4 +70,5 @@ decorator:
 	singleton		\
 	factory			\
 	observer		\
-	decorator
+	decorator		\
+	strategy
