@@ -55,6 +55,9 @@ decorator:
 strategy:
 	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined strategy.cc -o strategy
 
+fibonacci:
+	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined fibonacci.cc -o fibonacci
+
 .PHONY: binary_search_tree      \
 	sparse_undirected_graph \
 	dense_undirected_graph  \
@@ -71,4 +74,5 @@ strategy:
 	factory			\
 	observer		\
 	decorator		\
-	strategy
+	strategy		\
+	fibonacci
