@@ -1,1 +1,2 @@
 - investigate optimisation of sieve of eratosthenes
+- change queue implementation to not use that stupid trick
