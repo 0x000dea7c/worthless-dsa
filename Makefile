@@ -1,78 +1,14 @@
-binary_min_heap:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined binary_min_heap.cc -o binary_min_heap
+CXX      := g++
+CXXFLAGS := -Wall -std=gnu++23 -ggdb -fsanitize=address,leak,undefined
+SOURCES  := $(wildcard src/*.cc)
+TARGETS  := $(patsubst src/%.cc, %, $(SOURCES))
 
-queue:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined queue.cc -o queue
+all: $(TARGETS)
 
-binary_search_tree:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined binary_search_tree.cc -o binary_search_tree
+%: src/%.cc
+	$(CXX) $(CXXFLAGS) $< -o $@
 
-trie:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined trie.cc -o trie
+.PHONY: all clean
 
-singly_linked_list:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singly_linked_list.cc -o singly_linked_list
-
-doubly_linked_list:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined doubly_linked_list.cc -o doubly_linked_list
-
-dynamic_array:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dynamic_array.cc -o dynamic_array
-
-sparse_undirected_graph:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_undirected_graph.cc -o sparse_undirected_graph
-
-dense_undirected_graph:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_undirected_graph.cc -o dense_undirected_graph
-
-string_permutation:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined string_permutation.cc -o string_permutation
-
-sparse_directed_graph:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined sparse_directed_graph.cc -o sparse_directed_graph
-
-dense_directed_graph:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined dense_directed_graph.cc -o dense_directed_graph
-
-bits:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined bits.cc -o bits
-
-primes:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined primes.cc -o primes
-
-singleton:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined singleton.cc -o singleton
-
-factory:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined factory.cc -o factory
-
-observer:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined observer.cc -o observer
-
-decorator:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined decorator.cc -o decorator
-
-strategy:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined strategy.cc -o strategy
-
-fibonacci:
-	g++ -std=gnu++23 -ggdb -fsanitize=address,leak,undefined fibonacci.cc -o fibonacci
-
-.PHONY: binary_search_tree      \
-	sparse_undirected_graph \
-	dense_undirected_graph  \
-	doubly_linked_list      \
-	string_permutation      \
-	sparse_directed_graph   \
-	trie singly_linked_list \
-	dense_directed_graph    \
-	binary_min_heap         \
-	queue                   \
-	bits                    \
-	primes                  \
-	singleton		\
-	factory			\
-	observer		\
-	decorator		\
-	strategy		\
-	fibonacci
+clean:
+	rm -f $(TARGETS)
