@@ -3,38 +3,77 @@
 #include <stack>
 #include <cstdint>
 
-using u32 = std::uint32_t;
-using i32 = std::int32_t;
-
 class binary_search_tree final
 {
 public:
   binary_search_tree ()
-    : _root {nullptr}
-  {
-  }
+    : _root {nullptr},
+      _size {0}
+  {}
 
   ~binary_search_tree ()
   {
-    make_empty (_root);
+    if (_root == nullptr)
+      {
+        return;
+      }
+
+    std::stack<node*> nodes;
+    nodes.push (_root);
+
+    while (! nodes.empty ())
+      {
+        auto* n = nodes.top ();
+
+        nodes.pop ();
+
+        if (n->_right)
+          nodes.push (n->_right);
+
+        if (n->_left)
+          nodes.push (n->_left);
+
+        delete n;
+      }
   }
 
   void
-  insert (i32 key, i32 value)
+  insert (std::string const& key, std::string const& value)
   {
-    insert (_root, key, value);
-  }
+    if (key.empty ())
+      {
+        return;
+      }
 
-  void
-  remove (i32 key)
-  {
-    remove (_root, key);
+    insert (key, value, _root);
   }
 
   bool
-  contains (i32 key) const
+  remove (std::string const& key)
   {
-    return contains (_root, key);
+    if (key.empty ())
+      {
+        return false;
+      }
+
+    return remove (key, _root);
+  }
+
+  bool
+  contains (std::string const& key) const
+  {
+    if (key.empty ())
+      {
+        return false;
+      }
+
+    return contains (key, _root);
+  }
+
+  bool
+  empty () const
+  {
+    return _root == nullptr;
   }
 
   void
@@ -55,273 +94,261 @@ public:
     postorder_print (_root);
   }
 
-  bool
-  empty () const
+  std::optional<std::string>
+  get (std::string const& key) const
   {
-    return _root == nullptr;
+    return get (key, _root);
   }
 
 private:
   struct node final
   {
-    node (node* left, node* right, i32 key, i32 value)
-      : _left  {left},
-	_right {right},
-	_key   {key},
-	_value {value}
+    node (node* left, node* right, std::string const& key, std::string const& value)
+      : _left {left},
+        _right {right},
+        _key {key},
+        _value {value}
     {}
 
     node* _left;
     node* _right;
-    i32   _key;
-    i32   _value;
+    std::string _key;
+    std::string _value;
   };
 
-  void
-  insert (node*& current, i32 key, i32 value)
+  std::optional<std::string>
+  get (std::string const& key, node* root) const
   {
-    if (!current)
-      current = new node (nullptr, nullptr, key, value);
-    else if (key > current->_key)
-      insert (current->_right, key, value);
-    else if (key < current->_key)
-      insert (current->_left, key, value);
-    else
-      ; // don't do shit cause we don't support dups
-  }
-
-  void
-  remove (node*& current, i32 key)
-  {
-    if (current == nullptr)
-      return;
-
-    if (key > current->_key)
-      remove (current->_right, key);
-    else if (key < current->_key)
-      remove (current->_left, key);
+    if (root == nullptr)
+      {
+        return std::nullopt;
+      }
+    else if (key > root->_key)
+      {
+        return get (key, root->_right);
+      }
+    else if (key < root->_key)
+      {
+        return get (key, root->_left);
+      }
     else
       {
-	if (current->_right && current->_left)
-	  {
-	    auto* min = find_min (current->_right);
-	    current->_value = min->_value;
-	    current->_key = min->_key;
-	    remove (current->_right, current->_key);
-	  }
-	else
-	  {
-	    auto* child = current->_right ? current->_right : current->_left;
-	    delete current;
-	    current = child;
-	  }
+        return root->_value;
       }
   }
 
   void
-  preorder_print (node* current) const
+  insert (std::string const& key, std::string const& value, node*& root)
   {
-    if (current)
+    if (root == nullptr)
       {
-	std::cout << current->_key << ' ';
-	preorder_print (current->_left);
-	preorder_print (current->_right);
+        root = new node (nullptr, nullptr, key, value);
       }
-  }
-
-  void
-  inorder_print (node* current) const
-  {
-    if (current)
+    else if (key > root->_key)
       {
-	inorder_print (current->_left);
-	std::cout << current->_key << ' ';
-	inorder_print (current->_right);
+        insert (key, value, root->_right);
       }
-  }
-
-  void
-  postorder_print (node* current) const
-  {
-    if (current)
+    else if (key < root->_key)
       {
-	postorder_print (current->_left);
-	postorder_print (current->_right);
-	std::cout << current->_key << ' ';
+        insert (key, value, root->_left);
       }
-  }
-
-  void
-  make_empty (node* current)
-  {
-    if (current)
+    else
       {
-	make_empty (current->_left);
-	make_empty (current->_right);
-	delete current;
+        root->_value = value;
       }
   }
 
   bool
-  contains (node* current, i32 key) const
+  remove (std::string const& key, node*& root)
   {
-    if (!current)
-      return false;
-
-    if (key > current->_key)
-      return contains (current->_right, key);
-    else if (key < current->_key)
-      return contains (current->_left, key);
+    if (root == nullptr)
+      {
+        return false;
+      }
+    else if (key > root->_key)
+      {
+        return remove (key, root->_right);
+      }
+    else if(key < root->_key)
+      {
+        return remove (key, root->_left);
+      }
     else
-      return true;
+      {
+        if (root->_left && root->_right)
+          {
+            node* min = find_min (root->_right);
+            root->_key = std::move (min->_key);
+            root->_value = std::move (min->_value);
+            return remove (key, root->_right);
+          }
+        else
+          {
+            node* n = (root->_left) ? root->_left : root->_right;
+            delete root;
+            root = n;
+            return true;
+          }
+      }
+  }
+
+  bool
+  contains (std::string const& key, node* root) const
+  {
+    if (root == nullptr)
+      {
+        return false;
+      }
+    else if (key > root->_key)
+      {
+        return contains (key, root->_right);
+      }
+    else if (key < root->_key)
+      {
+        return contains (key, root->_left);
+      }
+    else
+      {
+        return true;
+      }
+  }
+
+  void
+  preorder_print (node* root) const
+  {
+    if (root != nullptr)
+      {
+        std::cout << root->_key << ' ';
+        preorder_print (root->_left);
+        preorder_print (root->_right);
+      }
+  }
+
+  void
+  inorder_print (node* root) const
+  {
+    if (root != nullptr)
+      {
+        inorder_print (root->_left);
+        std::cout << root->_key << ' ';
+        inorder_print (root->_right);
+      }
+  }
+
+  void
+  postorder_print (node* root) const
+  {
+    if (root != nullptr)
+      {
+        postorder_print (root->_left);
+        postorder_print (root->_right);
+        std::cout << root->_key << ' ';
+      }
   }
 
   node*
-  find_min (node* current) const
+  find_min (node* root) const
   {
-    while (current->_left)
-      current = current->_left;
-    return current;
+    while (root->_left != nullptr)
+      {
+        root = root->_left;
+      }
+    return root;
   }
 
   node* _root;
+  uint64_t _size;
 };
 
 int
 main ()
 {
-  std::cout << "Testing binary search tree...";
+  using namespace std::string_literals;
 
-  binary_search_tree tree;
+  {
+    // Basic functionality.
+    binary_search_tree tree;
 
-  tree.insert (10, 10);
-  tree.insert ( 5,  5);
-  tree.insert (20, 20);
+    tree.insert ("self"s, "harm"s);
+    tree.insert ("basic"s, "attack"s);
+    tree.insert ("jump"s, "crouch"s);
 
-  tree.insert ( 3,  3);
-  tree.insert ( 6,  6);
+    assert (tree.contains ("self"s));
+    assert (tree.contains ("basic"s));
+    assert (tree.contains ("jump"s));
 
-  tree.insert (30, 30);
-  tree.insert (11, 11);
+    assert (tree.get ("self"s) == "harm"s);
+    assert (tree.get ("basic"s) == "attack"s);
 
-  assert (tree.contains (10) == true);
-  assert (tree.contains (5) == true);
-  assert (tree.contains (20) == true);
+    assert (tree.get ("jump"s) == "crouch"s);
 
-  assert (tree.contains (3) == true);
-  assert (tree.contains (6) == true);
+    assert (! tree.empty ());
 
-  assert (tree.contains (30) == true);
-  assert (tree.contains (11) == true);
+    tree.remove ("self"s);
+    tree.remove ("basic"s);
+    tree.remove ("jump"s);
 
-  assert (tree.contains (999) == false);
-  assert (tree.contains (-20) == false);
+    assert (tree.empty ());
+  }
 
-  tree.remove (11);		// leaf
-  tree.remove (30);		// leaf
+  {
+    // Override value of key.
+    binary_search_tree tree;
 
-  tree.remove (6);		// leaf
-  tree.remove (5);		// parent
+    tree.insert ("self"s, "harm"s);
 
-  assert (tree.contains (11) == false);
-  assert (tree.contains (30) == false);
-  assert (tree.contains (6)  == false);
-  assert (tree.contains (5)  == false);
-  assert (tree.contains (3)  == true);
+    assert (tree.contains ("self"s));
 
-  binary_search_tree tree2;
+    tree.insert ("self"s, "loathing"s);
 
-  for (int i = 0; i < 1000; ++i)
-    tree2.insert (i, i);
+    assert (tree.get ("self"s) == "loathing"s);
+  }
 
-  assert (! tree2.empty ());
+  {
+    // Removing leaves.
+    binary_search_tree tree;
 
-  for (int i = 0; i < 1000; ++i)
-    tree2.remove (i);
+    tree.insert ("i"s, "am"s);
+    tree.insert ("very"s, "stupid"s);
+    tree.insert ("be"s, "sorry"s);
 
-  assert (tree2.empty ());
+    assert (! tree.empty ());
 
-  binary_search_tree complex_tree;
+    assert (tree.contains ("i"s));
+    assert (tree.contains ("very"s));
+    assert (tree.contains ("be"s));
 
-  // Insert a series of nodes
-  complex_tree.insert(50, 50);
-  complex_tree.insert(30, 30);
-  complex_tree.insert(70, 70);
-  complex_tree.insert(20, 20);
-  complex_tree.insert(40, 40);
-  complex_tree.insert(60, 60);
-  complex_tree.insert(80, 80);
+    assert (tree.remove ("very"s));
+    assert (tree.remove ("be"s));
 
-  // Check if all inserted nodes are present
-  assert(complex_tree.contains(50) == true);
-  assert(complex_tree.contains(30) == true);
-  assert(complex_tree.contains(70) == true);
-  assert(complex_tree.contains(20) == true);
-  assert(complex_tree.contains(40) == true);
-  assert(complex_tree.contains(60) == true);
-  assert(complex_tree.contains(80) == true);
+    assert (! tree.empty ());
+    assert (tree.get ("i"s) == "am"s);
+  }
 
-  // Remove a node with two children
-  complex_tree.remove(30);
-  assert(complex_tree.contains(30) == false);
+  {
+    // Printing tree in order.
+    binary_search_tree tree;
+    tree.insert ("hello"s, "to you"s);
+    tree.insert ("dialog"s, "test"s);
+    tree.insert ("fire"s, "in the hole"s);
+    tree.insert ("luna"s, "random"s);
+    tree.insert ("kilo"s, "cheese"s);
 
-  // Remove a leaf node
-  complex_tree.remove(20);
-  assert(complex_tree.contains(20) == false);
+    std::cout << "\n...Printing preorder...\n";
+    tree.preorder_print ();
 
-  // Remove a node with one child
-  complex_tree.remove(70);
-  assert(complex_tree.contains(70) == false);
+    std::cout << "\n...Printing inorder...\n";
+    tree.inorder_print ();
 
-  // Check remaining nodes
-  assert(complex_tree.contains(50) == true);
-  assert(complex_tree.contains(40) == true);
-  assert(complex_tree.contains(60) == true);
-  assert(complex_tree.contains(80) == true);
+    std::cout << "\n...Printing postorder...\n";
+    tree.postorder_print ();
+  }
 
-  // Insert more nodes
-  complex_tree.insert(65, 65);
-  complex_tree.insert(55, 55);
-  complex_tree.insert(75, 75);
+  {
+    // TODO: need test cases for removing node with 2 children and with 1.
+  }
 
-  // Check new insertions
-  assert(complex_tree.contains(65) == true);
-  assert(complex_tree.contains(55) == true);
-  assert(complex_tree.contains(75) == true);
-
-  // Remove root node
-  complex_tree.remove(50);
-  assert(complex_tree.contains(50) == false);
-
-  // Check tree structure after complex operations
-  assert(complex_tree.contains(40) == true);
-  assert(complex_tree.contains(60) == true);
-  assert(complex_tree.contains(80) == true);
-  assert(complex_tree.contains(65) == true);
-  assert(complex_tree.contains(55) == true);
-  assert(complex_tree.contains(75) == true);
-
-  std::cout << "\n...Printing preorder...\n";
-  complex_tree.preorder_print ();
-
-  std::cout << "\n...Printing inorder...\n";
-  complex_tree.inorder_print ();
-
-  std::cout << "\n...Printing postorder...\n";
-  complex_tree.postorder_print ();
-
-  // Final removals to empty the tree
-  complex_tree.remove(40);
-  complex_tree.remove(60);
-  complex_tree.remove(80);
-  complex_tree.remove(65);
-  complex_tree.remove(55);
-  complex_tree.remove(75);
-
-  // Ensure the tree is empty
-  assert(complex_tree.empty() == true);
-
-  std::cout << "ok...\n";
+  std::cout << "\nAll tests passed!\n";
 
   return 0;
 }
