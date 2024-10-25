@@ -3,60 +3,56 @@
 #include <cstdint>
 #include <limits>
 #include <iostream>
-
-using i32 = std::int32_t;
-using u32 = std::int32_t;
+#include <optional>
 
 class binary_min_heap final
 {
 public:
-  binary_min_heap (u32 capacity)
+  binary_min_heap (uint32_t capacity)
     : _size  {0},
       _index {0}
   {
     if (capacity == 0)
-      throw std::runtime_error ("capacity is 0");
+      {
+        throw std::runtime_error ("Capacity is 0.");
+      }
 
-    _data.resize (capacity);
+    _data.resize (capacity + 1);
   }
 
   ~binary_min_heap () = default;
 
   void
-  insert (i32 value)
+  insert (int32_t value)
   {
-    if (_size + 1 == _data.capacity ())
+    auto const cap = _data.capacity ();
+
+    if (_size + 1 == cap)
       {
-	auto cap = _data.capacity ();
-	_data.resize (cap * 2);
+        _data.resize (cap * 2);
       }
+
+    uint32_t hole = ++_index;
 
     _data[0] = value;
 
-    u32 hole = ++_index;
-
     for ( ; _data[0] < _data[hole / 2]; hole /= 2)
-      _data[hole] = _data[hole / 2];
+      {
+        _data[hole] = _data[hole / 2];
+      }
 
     _data[hole] = _data[0];
 
     ++_size;
   }
 
-  i32
-  get_min () const
-  {
-    if (empty ())
-      throw std::runtime_error ("heap is empty");
-
-    return _data[1];
-  }
-
   void
   delete_min ()
   {
     if (empty ())
-      throw std::runtime_error ("heap is empty");
+      {
+        throw std::runtime_error ("Heap is empty.");
+      }
 
     _data[1] = _data[_index--];
 
@@ -65,13 +61,24 @@ public:
     --_size;
   }
 
+  std::optional<int32_t>
+  get_min () const
+  {
+    if (empty ())
+      {
+        return std::nullopt;
+      }
+
+    return _data[1];
+  }
+
   bool
   empty () const
   {
     return size () == 0;
   }
 
-  u32
+  uint32_t
   size () const
   {
     return _size;
@@ -79,30 +86,36 @@ public:
 
 private:
   void
-  percolate_down (u32 hole)
+  percolate_down (uint32_t hole)
   {
-    i32 hole_value = _data[hole];
-    i32 child;
+    int32_t hole_value = _data[hole];
+    uint32_t child;
 
     for ( ; hole * 2 <= _index; hole *= 2)
       {
-	child = hole * 2;
+        child = hole * 2;
 
-	if (child != _index && _data[child + 1] < _data[child])
-	  ++child;
+        if (child != _index && _data[child + 1] < _data[child])
+          {
+            ++child;
+          }
 
-	if (_data[child] < _data[hole])
-	  _data[hole] = _data[child];
-	else
-	  break;
+        if (_data[child] < _data[hole])
+          {
+            _data[hole] = _data[child];
+          }
+        else
+          {
+            break;
+          }
       }
 
     _data[hole] = hole_value;
   }
 
-  std::vector<i32> _data;
-  u32 _size;
-  u32 _index;
+  std::vector<int32_t> _data;
+  uint32_t _size;
+  uint32_t _index;
 };
 
 int

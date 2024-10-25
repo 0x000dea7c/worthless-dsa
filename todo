@@ -1,2 +1,7 @@
-- investigate optimisation of sieve of eratosthenes
-- change queue implementation to not use that stupid trick
+- investigate optimisation of sieve of eratosthenes (uint_8 vs. bool, store only odd numbers)
+- change some implementations that use integers to strings because it's more interesting that way (plus you can use move, which is what you want to do when you templatise)
+- todo (bubble sort, merge sort, quick sort, selection sort, radix sort)
+- todo (binary search (duh))
+- todo projects to solidify c++ knowledge (web crawler (multithread?), chat multithread)
+- todo (own malloc/free, smart pointer class (shared ptr))
+- practice practice practice
