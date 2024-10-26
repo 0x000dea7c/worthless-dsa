@@ -1,39 +1,80 @@
 #include <iostream>
-#include <cassert>
-#include <cstdint>
+#include <cstdlib>
 #include <string>
+#include <cassert>
+#include <cstdlib>
 #include <vector>
+
+// DCC (divide, conquer, combine), O(n log n)
+template<typename T>
+static void
+merge (std::vector<T>& data, uint32_t left, uint32_t mid, uint32_t right)
+{
+  auto const n1 = mid - left + 1;
+  auto const n2 = right - mid;
+
+  std::vector<T> half1 (n1), half2 (n2);
+
+  for (uint32_t i = 0; i < n1; ++i)
+    {
+      half1[i] = std::move (data[left + i]);
+    }
+
+  for (uint32_t i = 0; i < n2; ++i)
+    {
+      half2[i] = std::move (data[mid + i + 1]);
+    }
+
+  uint32_t i = 0, j = 0, k = left;
+
+  while (i < n1 && j < n2)
+    {
+      if (half1[i] <= half2[j])
+        {
+          data[k++] = std::move (half1[i++]);
+        }
+      else
+        {
+          data[k++] = std::move (half2[j++]);
+        }
+    }
+
+  while (i < n1)
+    {
+      data[k++] = std::move (half1[i++]);
+    }
+
+  while (j < n2)
+    {
+      data[k++] = std::move (half2[j++]);
+    }
+}
+
+template<typename T>
+static void
+mergesort (std::vector<T>& data, uint32_t left, uint32_t right)
+{
+  if (left < right)
+    {
+      uint32_t mid = left + ((right - left) / 2);
+
+      mergesort (data, left, mid);
+      mergesort (data, mid + 1, right);
+
+      merge (data, left, mid, right);
+    }
+}
 
 template<typename T>
 void
-bubblesort (std::vector<T>& data)
+sort (std::vector<T>& data)
 {
-  if (data.empty ())
+  if (data.empty () || data.size () == 1)
     {
       return;
     }
 
-  auto const n = data.size ();
-  bool swapped;
-
-  for (uint32_t i = 0; i < n - 1; ++i)
-    {
-      swapped = false;
-
-      for (uint32_t j = 0; j < n - i - 1; ++j)
-        {
-          if (data[j] > data[j + 1])
-            {
-              std::swap (data[j], data[j + 1]);
-              swapped = true;
-            }
-        }
-
-      if (!swapped)
-        {
-          break;
-        }
-    }
+  mergesort (data, 0, data.size () - 1);
 }
 
 int
@@ -45,7 +86,7 @@ main ()
     // Already sorted, shouldn't do anything.
     std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "alligator"s);
     assert (data[1] == "befriend"s);
@@ -72,7 +113,7 @@ main ()
       "keiko"s,
     };
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "keiko"s);
     assert (data[1] == "lucas"s);
@@ -97,7 +138,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements", "here"
     };
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -115,7 +156,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements",
     };
 
-    bubblesort (data);
+    mergesort (data, 0, data.size () - 1);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -130,13 +171,12 @@ main ()
     // Empty container. (doesn't blow up)
     std::vector<std::string> data;
 
-    bubblesort (data);
+    sort (data);
 
     assert (data.empty ());
   }
 
   {
-    // Vector with integers, lots of elements, takes a bit of time since bubblesort takes O(n^2) time.
     std::vector<int32_t> data;
 
     for (int32_t i = 10'000; i >= 0; --i)
@@ -144,7 +184,7 @@ main ()
         data.push_back (i);
       }
 
-    bubblesort (data);
+    sort (data);
 
     for (int32_t i = 0; i <= 10'000; ++i)
       {
@@ -155,4 +195,5 @@ main ()
   std::cout << "All tests passed!\n";
 
   return EXIT_SUCCESS;
+
 }

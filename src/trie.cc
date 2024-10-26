@@ -5,10 +5,7 @@
 #include <string>
 #include <stack>
 #include <cstdint>
-
-using i32 = std::int32_t;
-
-i32 constexpr alphabet_size {26};
+#include <utility>
 
 class trie final
 {
@@ -20,128 +17,163 @@ public:
   ~trie ()
   {
     if (_root == nullptr)
-      return;
+      {
+        return;
+      }
 
     std::stack<node*> nodes;
     nodes.push (_root);
 
     while (! nodes.empty ())
       {
-	auto node = nodes.top ();
+        auto c = nodes.top ();
 
-	nodes.pop ();
+        nodes.pop ();
 
-	for (int i = 0; i < node->_children.size (); ++i)
-	  if (node->_children[i])
-	    nodes.push (node->_children[i]);
+        for (auto* p : c->_children)
+          {
+            if (p != nullptr)
+              {
+                nodes.push (p);
+              }
+          }
 
-	delete node;
+        delete c;
       }
   }
 
   void
   insert (std::string const& key)
   {
-    if (_root == nullptr)
-      _root = new node (false);
-
-    node* current {_root};
-
-    for (auto const& c : key)
+    if (key.empty ())
       {
-	int child = c - 'a';
-
-	if (!current->_children[child])
-	  current->_children[child] = new node (false);
-
-	current = current->_children[child];
+        return;
       }
 
-    current->_finished = true;
+    if (_root == nullptr)
+      {
+        _root = new node (false);
+      }
+
+    node* current_node {_root};
+    uint32_t child;
+
+    for (auto const& n : key)
+      {
+        child = n - 'a';
+
+        if (current_node->_children[child] == nullptr)
+          {
+            current_node->_children[child] = new node (false);
+          }
+
+        current_node = current_node->_children[child];
+      }
+
+    current_node->_finished = true;
   }
 
-  void
+  bool
   remove (std::string const& key)
   {
     if (key.empty () || empty ())
-      return;
+      {
+        return false;
+      }
 
     std::stack<node*> nodes;
     nodes.push (_root);
+    uint32_t child;
 
-    for (auto const& c : key)
+    for (auto const& n : key)
       {
-	int child = c - 'a';
+        auto* current_node = nodes.top ();
 
-	if (! nodes.top ()->_children[child])
-	  return;
+        child = n - 'a';
 
-	nodes.push (nodes.top ()->_children[child]);
+        if (current_node->_children[child] == nullptr)
+          {
+            return false;
+          }
+
+        nodes.push (current_node->_children[child]);
       }
 
     if (! nodes.top ()->_finished)
-      return;
+      {
+        return false;
+      }
 
     if (! is_leaf (nodes.top ()))
       {
-	nodes.top ()->_finished = false;
-	return;
+        nodes.top ()->_finished = false;
+        return true;
       }
 
     while (! nodes.empty () && is_leaf (nodes.top ()))
       {
-	node* child_ptr = nodes.top ();
+        auto* child = nodes.top ();
 
-	nodes.pop ();
+        nodes.pop ();
 
-	if (! nodes.empty ())
-	  {
-	    node* parent = nodes.top ();
-	    int letter = key[nodes.size () - 1];
-	    int child = letter - 'a';
-	    parent->_children[child] = nullptr;
-	    delete child_ptr;
-	  }
+        if (! nodes.empty ())
+          {
+            auto* parent = nodes.top ();
+            parent->_children[key[nodes.size () - 1] - 'a'] = nullptr;
+            delete child;
+          }
       }
+
+    return true;
   }
 
   bool
   contains_key (std::string const& key) const
   {
     if (key.empty () || empty ())
-      return false;
-
-    node* current {_root};
-
-    for (auto const& c : key)
       {
-	int child = c - 'a';
-
-	if (!current->_children[child])
-	  return false;
-
-	current = current->_children[child];
+        return false;
       }
 
-    return current->_finished == true;
+    auto* current_node = _root;
+    uint32_t child;
+
+    for (auto const& n : key)
+      {
+        child = n - 'a';
+
+        if (current_node->_children[child] == nullptr)
+          {
+            return false;
+          }
+
+        current_node = current_node->_children[child];
+      }
+
+    return current_node->_finished;
   }
 
   bool
   contains_prefix (std::string const& prefix) const
   {
     if (prefix.empty () || empty ())
-      return false;
-
-    node* current {_root};
-
-    for (auto const& c : prefix)
       {
-	int child = c - 'a';
+        return false;
+      }
 
-	if (!current->_children[child])
-	  return false;
+    auto* current_node = _root;
+    uint32_t child;
 
-	current = current->_children[child];
+    for (auto const& n : prefix)
+      {
+        child = n - 'a';
+
+        if (current_node->_children[child] == nullptr)
+          {
+            return false;
+          }
+
+        current_node = current_node->_children[child];
       }
 
     return true;
@@ -156,74 +188,90 @@ public:
   std::vector<std::string>
   get_words_with_shared_prefix (std::string const& prefix) const
   {
+    std::vector<std::string> words;
+
     if (prefix.empty () || empty ())
-      return {};
-
-    node* current {_root};
-
-    for (auto const& c : prefix)
       {
-	int child = c - 'a';
-
-	if (!current->_children[child])
-	  return {};
-
-	current = current->_children[child];
+        return words;
       }
 
-    std::vector<std::string> words;
-    std::stack<std::pair<node*, std::string>> current_nodes;
-    current_nodes.emplace (std::make_pair (current, prefix));
+    auto* n = _root;
+    uint32_t child;
 
-    while (! current_nodes.empty ())
+    for (auto const& l : prefix)
       {
-	auto [node, str] = current_nodes.top ();
+        child = l - 'a';
 
-	current_nodes.pop ();
+        if (n->_children[child] == nullptr)
+          {
+            return words;
+          }
 
-	if (node->_finished)
-	  {
-	    words.emplace_back (str);
-	  }
-	else
-	  {
-	    for (int i = 0; i < node->_children.size (); ++i)
+        n = n->_children[child];
+      }
+
+    std::stack<std::pair<node*, std::string>> current;
+    current.emplace (std::make_pair (n, prefix));
+
+    while (! current.empty ())
+      {
+        auto [n, str] = current.top ();
+
+        current.pop ();
+
+        if (n->_finished)
+          {
+            words.emplace_back (str);
+          }
+        else
+          {
+            for (uint32_t i = 0; i < n->_children.size (); ++i)
 	      {
-		if (node->_children[i])
+		if (n->_children[i] != nullptr)
 		  {
 		    char letter = static_cast<char>('a' + i);
-		    current_nodes.emplace (std::make_pair (node->_children[i], str + letter));
+		    current.emplace (std::make_pair (n->_children[i], str + letter));
 		  }
 	      }
-	  }
+          }
       }
 
     return words;
   }
 
 private:
+  static uint32_t constexpr alphabet_size {26};
+
   struct node final
   {
     node (bool finished)
       : _finished {finished}
     {
       for (auto*& p : _children)
-	p = nullptr;
+        {
+          p = nullptr;
+        }
     }
 
-    std::array<node*, alphabet_size> _children;
     bool _finished;
+    std::array<node*, alphabet_size> _children;
   };
 
   bool
   is_leaf (node* current) const
   {
-    if (!current)
-      return true;
+    if (current == nullptr)
+      {
+        return true;
+      }
 
-    for (int i = 0; i < current->_children.size (); ++i)
-      if (current->_children[i])
-	return false;
+    for (auto* p : current->_children)
+      {
+        if (p != nullptr)
+          {
+            return false;
+          }
+      }
 
     return true;
   }

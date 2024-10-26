@@ -6,13 +6,14 @@
 #include <optional>
 #include <cassert>
 #include <cstdint>
+#include <utility>
 
 // Only stores strings and the number of buckets is fixed.
 class hashmap final
 {
 public:
   hashmap ()
-    : _table (_table_size),
+    : _table (capacity),
       _size {0}
   {}
 
@@ -21,43 +22,28 @@ public:
   void
   put (std::string const& key, std::string const& value)
   {
-    auto hash_value = hash_function (key);
+    auto hash = hash_function (key);
+    auto& list = _table[hash];
 
-    for (auto& [k, v] : _table[hash_value])
+    for (auto& [k, v] : list)
       {
-        if (key == k)
+        if (k == key)
           {
             v = value;
             return;
           }
       }
 
-    _table[hash_value].emplace_back (key, value);
+    _table[hash].emplace_back (key, value);
 
     ++_size;
-  }
-
-  std::optional<std::string>
-  get (std::string const& key) const
-  {
-    auto hash_value = hash_function (key);
-
-    for (auto const& [k, v] : _table[hash_value])
-      {
-        if (k == key)
-          {
-            return v;
-          }
-      }
-
-    return std::nullopt;        // or {}
   }
 
   bool
   remove (std::string const& key)
   {
-    auto hash_value = hash_function (key);
-    auto& list = _table[hash_value];
+    auto hash = hash_function (key);
+    auto& list = _table[hash];
 
     for (auto it = list.begin (); it != list.end (); ++it)
       {
@@ -70,6 +56,23 @@ public:
       }
 
     return false;
+  }
+
+  std::optional<std::string>
+  get (std::string const& key) const
+  {
+    auto hash = hash_function (key);
+    auto& list = _table[hash];
+
+    for (auto it = list.begin (); it != list.end (); ++it)
+      {
+        if (it->first == key)
+          {
+            return it->second;
+          }
+      }
+
+    return std::nullopt;
   }
 
   uint32_t
@@ -88,10 +91,10 @@ private:
   uint32_t
   hash_function (std::string const& key) const
   {
-    return std::hash<std::string>()(key) % _table_size;
+    return std::hash<std::string>()(key) % capacity;
   }
 
-  static constexpr uint32_t _table_size {10};
+  static uint32_t constexpr capacity {10};
   std::vector<std::list<std::pair<std::string, std::string>>> _table;
   uint32_t _size;
 };
