@@ -1,67 +1,32 @@
 #include <iostream>
-#include <cstdlib>
-#include <string>
 #include <cassert>
-#include <cstdint>
 #include <vector>
+#include <string>
+#include <cstdint>
 
-// DCC (divide, conquer, combine), O(n log n)
+// SSS (select, swap, step forward)
 template<typename T>
-static void
-merge (std::vector<T>& data, uint32_t left, uint32_t mid, uint32_t right)
+void
+selection_sort (std::vector<T>& data)
 {
-  auto const n1 = mid - left + 1;
-  auto const n2 = right - mid;
+  auto const n = data.size ();
 
-  std::vector<T> half1 (n1), half2 (n2);
-
-  for (uint32_t i = 0; i < n1; ++i)
+  for (uint32_t i = 0; i < n; ++i)
     {
-      half1[i] = std::move (data[left + i]);
-    }
+      uint32_t j_min = i;
 
-  for (uint32_t i = 0; i < n2; ++i)
-    {
-      half2[i] = std::move (data[mid + i + 1]);
-    }
-
-  uint32_t i = 0, j = 0, k = left;
-
-  while (i < n1 && j < n2)
-    {
-      if (half1[i] <= half2[j])
+      for (uint32_t j = i + 1; j < n; ++j)
         {
-          data[k++] = std::move (half1[i++]);
+          if (data[j] < data[j_min])
+            {
+              j_min = j;
+            }
         }
-      else
+
+      if (i != j_min)
         {
-          data[k++] = std::move (half2[j++]);
+          std::swap (data[i], data[j_min]);
         }
-    }
-
-  while (i < n1)
-    {
-      data[k++] = std::move (half1[i++]);
-    }
-
-  while (j < n2)
-    {
-      data[k++] = std::move (half2[j++]);
-    }
-}
-
-template<typename T>
-static void
-mergesort (std::vector<T>& data, uint32_t left, uint32_t right)
-{
-  if (left < right)
-    {
-      uint32_t mid = left + ((right - left) / 2);
-
-      mergesort (data, left, mid);
-      mergesort (data, mid + 1, right);
-
-      merge (data, left, mid, right);
     }
 }
 
@@ -69,12 +34,7 @@ template<typename T>
 void
 sort (std::vector<T>& data)
 {
-  if (data.empty () || data.size () == 1)
-    {
-      return;
-    }
-
-  mergesort (data, 0, data.size () - 1);
+  selection_sort (data);
 }
 
 int
@@ -156,7 +116,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements",
     };
 
-    mergesort (data, 0, data.size () - 1);
+    sort (data);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -195,5 +155,4 @@ main ()
   std::cout << "All tests passed!\n";
 
   return EXIT_SUCCESS;
-
 }

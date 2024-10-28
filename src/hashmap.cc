@@ -8,42 +8,75 @@
 #include <cstdint>
 #include <utility>
 
-// Only stores strings and the number of buckets is fixed.
 class hashmap final
 {
 public:
   hashmap ()
-    : _table (capacity),
+    : _buckets (_capacity),
       _size {0}
   {}
 
   ~hashmap () = default;
 
-  void
+  bool
   put (std::string const& key, std::string const& value)
   {
-    auto hash = hash_function (key);
-    auto& list = _table[hash];
+    if (key.empty ())
+      {
+        return false;
+      }
+
+    auto hash_value = hash_function (key);
+    auto& list = _buckets[hash_value];
 
     for (auto& [k, v] : list)
       {
         if (k == key)
           {
             v = value;
-            return;
+            return true;
           }
       }
 
-    _table[hash].emplace_back (key, value);
+    list.emplace_back (key, value);
 
     ++_size;
+
+    return true;
+  }
+
+  std::optional<std::string>
+  get (std::string const& key) const
+  {
+    if (key.empty ())
+      {
+        return std::nullopt;
+      }
+
+    auto hash_value = hash_function (key);
+    auto& list = _buckets[hash_value];
+
+    for (auto const& [k, v] : list)
+      {
+        if (k == key)
+          {
+            return v;
+          }
+      }
+
+    return std::nullopt;
   }
 
   bool
   remove (std::string const& key)
   {
-    auto hash = hash_function (key);
-    auto& list = _table[hash];
+    if (key.empty ())
+      {
+        return false;
+      }
+
+    auto hash_value = hash_function (key);
+    auto& list = _buckets[hash_value];
 
     for (auto it = list.begin (); it != list.end (); ++it)
       {
@@ -56,23 +89,6 @@ public:
       }
 
     return false;
-  }
-
-  std::optional<std::string>
-  get (std::string const& key) const
-  {
-    auto hash = hash_function (key);
-    auto& list = _table[hash];
-
-    for (auto it = list.begin (); it != list.end (); ++it)
-      {
-        if (it->first == key)
-          {
-            return it->second;
-          }
-      }
-
-    return std::nullopt;
   }
 
   uint32_t
@@ -91,11 +107,11 @@ private:
   uint32_t
   hash_function (std::string const& key) const
   {
-    return std::hash<std::string>()(key) % capacity;
+    return std::hash<std::string>()(key) % _capacity;
   }
 
-  static uint32_t constexpr capacity {10};
-  std::vector<std::list<std::pair<std::string, std::string>>> _table;
+  static uint32_t constexpr _capacity {10};
+  std::vector<std::list<std::pair<std::string, std::string>>> _buckets;
   uint32_t _size;
 };
 
