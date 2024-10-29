@@ -156,7 +156,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements",
     };
 
-    mergesort (data, 0, data.size () - 1);
+    sort (data);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -195,5 +195,4 @@ main ()
   std::cout << "All tests passed!\n";
 
   return EXIT_SUCCESS;
-
 }
