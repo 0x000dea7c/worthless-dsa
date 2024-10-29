@@ -7,61 +7,61 @@
 
 // DCC (divide, conquer, combine), O(n log n)
 template<typename T>
-static void
-merge (std::vector<T>& data, uint32_t left, uint32_t mid, uint32_t right)
+void
+merge (std::vector<T>& data, uint32_t start, uint32_t mid, uint32_t end)
 {
-  auto const n1 = mid - left + 1;
-  auto const n2 = right - mid;
+  auto const n1 = mid - start + 1;
+  auto const n2 = end - mid;
 
-  std::vector<T> half1 (n1), half2 (n2);
+  std::vector<T> left_half (n1), right_half (n2);
 
   for (uint32_t i = 0; i < n1; ++i)
     {
-      half1[i] = std::move (data[left + i]);
+      left_half[i] = std::move (data[start + i]);
     }
 
-  for (uint32_t i = 0; i < n2; ++i)
+  for (uint32_t j = 0; j < n2; ++j)
     {
-      half2[i] = std::move (data[mid + i + 1]);
+      right_half[j] = std::move (data[mid + j + 1]);
     }
 
-  uint32_t i = 0, j = 0, k = left;
+  uint32_t i = 0, j = 0, k = start;
 
   while (i < n1 && j < n2)
     {
-      if (half1[i] <= half2[j])
+      if (left_half[i] <= right_half[j])
         {
-          data[k++] = std::move (half1[i++]);
+          data[k++] = std::move (left_half[i++]);
         }
       else
         {
-          data[k++] = std::move (half2[j++]);
+          data[k++] = std::move (right_half[j++]);
         }
     }
 
   while (i < n1)
     {
-      data[k++] = std::move (half1[i++]);
+      data[k++] = std::move (left_half[i++]);
     }
 
   while (j < n2)
     {
-      data[k++] = std::move (half2[j++]);
+      data[k++] = std::move (right_half[j++]);
     }
 }
 
 template<typename T>
-static void
-mergesort (std::vector<T>& data, uint32_t left, uint32_t right)
+void
+mergesort (std::vector<T>& data, uint32_t start, uint32_t end)
 {
-  if (left < right)
+  if (start < end)
     {
-      uint32_t mid = left + ((right - left) / 2);
+      uint32_t mid = start + ((end - start) / 2);
 
-      mergesort (data, left, mid);
-      mergesort (data, mid + 1, right);
+      mergesort (data, start, mid);
+      mergesort (data, mid + 1, end);
 
-      merge (data, left, mid, right);
+      merge (data, start, mid, end);
     }
 }
 

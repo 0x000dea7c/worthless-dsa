@@ -8,11 +8,6 @@ template<typename T>
 void
 bubblesort (std::vector<T>& data)
 {
-  if (data.empty ())
-    {
-      return;
-    }
-
   auto const n = data.size ();
   bool swapped;
 
@@ -36,6 +31,18 @@ bubblesort (std::vector<T>& data)
     }
 }
 
+template<typename T>
+void
+sort (std::vector<T>& data)
+{
+  if (data.empty () || data.size () == 1)
+    {
+      return;
+    }
+
+  bubblesort (data);
+}
+
 int
 main ()
 {
@@ -45,7 +52,7 @@ main ()
     // Already sorted, shouldn't do anything.
     std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "alligator"s);
     assert (data[1] == "befriend"s);
@@ -72,7 +79,7 @@ main ()
       "keiko"s,
     };
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "keiko"s);
     assert (data[1] == "lucas"s);
@@ -97,7 +104,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements", "here"
     };
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -115,7 +122,7 @@ main ()
       "here", "we", "go", "even", "number", "of", "elements",
     };
 
-    bubblesort (data);
+    sort (data);
 
     assert (data[0] == "elements"s);
     assert (data[1] == "even"s);
@@ -130,7 +137,7 @@ main ()
     // Empty container. (doesn't blow up)
     std::vector<std::string> data;
 
-    bubblesort (data);
+    sort (data);
 
     assert (data.empty ());
   }
@@ -144,7 +151,7 @@ main ()
         data.push_back (i);
       }
 
-    bubblesort (data);
+    sort (data);
 
     for (int32_t i = 0; i <= 10'000; ++i)
       {

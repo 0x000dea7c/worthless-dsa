@@ -15,58 +15,93 @@ public:
 
   ~sparse_directed_graph () = default;
 
-  void
+  bool
   add_vertex (std::string const& vertex)
   {
-    if (vertex.empty () || _list.count (vertex) > 0)
-      return;
+    if (vertex.empty ())
+      {
+        return false;
+      }
 
     _vertices.emplace_back (vertex);
-
     _list[vertex] = std::vector<std::string> ();
+
+    return true;
   }
 
-  void
+  bool
   remove_vertex (std::string const& vertex)
   {
-    if (vertex.empty () || _list.count (vertex) == 0)
-      return;
+    if (vertex.empty ())
+      {
+        return false;
+      }
 
     std::erase_if (_vertices, [&vertex] (std::string const& arg) { return arg == vertex; });
 
     _list.erase (vertex);
 
     for (auto& [_, neighbours] : _list)
-      std::erase_if (neighbours, [&vertex] (std::string const& arg) { return arg == vertex; });
+      {
+        std::erase_if (neighbours, [&vertex] (std::string const& arg) { return arg == vertex; });
+      }
+
+    return true;
   }
 
-  void
+  bool
   add_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
-      return;
+    if (src.empty () || dst.empty ())
+      {
+        return false;
+      }
 
-    // no dups
-    if (std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ())
-      return;
+    if (_list.count (src) == 0 || _list.count (dst) == 0)
+      {
+        return false;
+      }
+
+    if (std::find (_list[src].begin (), _list[src].end (), dst) != _list[src].end ())
+      {
+        return false;
+      }
 
     _list[src].emplace_back (dst);
+
+    return true;
   }
 
-  void
+  bool
   remove_edge (std::string const& src, std::string const& dst)
   {
-    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
-      return;
+    if (src.empty () || dst.empty ())
+      {
+        return false;
+      }
 
-    std::erase_if (_list.at (src), [&dst] (std::string const& arg) { return arg == dst; });
+    if (_list.count (src) == 0 || _list.count (dst) == 0)
+      {
+        return false;
+      }
+
+    auto erased = std::erase_if (_list[src], [&dst] (std::string const& arg) { return arg == dst; });
+
+    return erased > 0 ? true : false;
   }
 
   bool
   has_edge (std::string const& src, std::string const& dst) const
   {
-    if (src.empty () || dst.empty () || _list.count (src) == 0 || _list.count (dst) == 0)
-      return false;
+    if (src.empty () || dst.empty ())
+      {
+        return false;
+      }
+
+    if (_list.count (src) == 0 || _list.count (dst) == 0)
+      {
+        return false;
+      }
 
     return std::find (_list.at (src).begin (), _list.at (src).end (), dst) != _list.at (src).end ();
   }
@@ -80,8 +115,10 @@ public:
 
     for (auto const& edge : _list.at (vertex))
       {
-	if (visited.count (edge) == 0)
-	  dfs_helper (edge, visited);
+        if (visited.count (edge) == 0)
+          {
+            dfs_helper (edge, visited);
+          }
       }
   }
 
@@ -92,8 +129,10 @@ public:
 
     for (auto const& vertex : _vertices)
       {
-	if (visited.count (vertex) == 0)
-	  dfs_helper (vertex, visited);
+        if (visited.count (vertex) == 0)
+          {
+            dfs_helper (vertex, visited);
+          }
       }
 
     std::cout << '\n';
@@ -102,34 +141,34 @@ public:
   void
   bfs () const
   {
-    std::unordered_set<std::string> visited;
     std::queue<std::string> current_vertices;
+    std::unordered_set<std::string> visited;
 
     for (auto const& vertex : _vertices)
       {
-	if (visited.count (vertex) == 0)
-	  {
-	    visited.emplace (vertex);
-	    current_vertices.emplace (vertex);
+        if (visited.count (vertex) == 0)
+          {
+            visited.emplace (vertex);
+            current_vertices.emplace (vertex);
 
-	    while (! current_vertices.empty ())
-	      {
-		auto current_vertex = current_vertices.front ();
+            while (! current_vertices.empty ())
+              {
+                auto current_vertex = current_vertices.front ();
 
-		std::cout << current_vertex << ' ';
+                std::cout << current_vertex << ' ';
 
-		current_vertices.pop ();
+                current_vertices.pop ();
 
-		for (auto const& edge : _list.at (current_vertex))
-		  {
-		    if (visited.count (edge) == 0)
-		      {
-			visited.emplace (edge);
-			current_vertices.emplace (edge);
-		      }
-		  }
-	      }
-	  }
+                for (auto const& edge : _list.at (current_vertex))
+                  {
+                    if (visited.count (edge) == 0)
+                      {
+                        visited.emplace (edge);
+                        current_vertices.emplace (edge);
+                      }
+                  }
+              }
+          }
       }
 
     std::cout << '\n';
@@ -143,33 +182,37 @@ public:
 
     for (auto const& edge : _list.at (vertex))
       {
-	if (visited.count (edge) == 0)
-	  {
-	    if (has_cycle_helper (edge, visited, path))
-	      return true;
-	  }
-	else if (path.count (edge) > 0)
-	  return true;
+        if (visited.count (edge) == 0)
+          {
+            if (has_cycle_helper (edge, visited, path))
+              {
+                return true;
+              }
+          }
+        else if (path.count (edge) > 0)
+          {
+            return true;
+          }
       }
 
     path.erase (vertex);
-
     return false;
   }
 
   bool
   has_cycle () const
   {
-    std::unordered_set<std::string> visited;
-    std::unordered_set<std::string> path;
+    std::unordered_set<std::string> visited, path;
 
     for (auto const& vertex : _vertices)
       {
-	if (visited.count (vertex) == 0)
-	  {
-	    if (has_cycle_helper (vertex, visited, path))
-	      return true;
-	  }
+        if (visited.count (vertex) == 0)
+          {
+            if (has_cycle_helper (vertex, visited, path))
+              {
+                return true;
+              }
+          }
       }
 
     return false;
