@@ -4,18 +4,16 @@
 #include <string>
 #include <cstdint>
 
-// SSS (select, swap, step forward)
+// // SSS (select, swap, step forward)
 template<typename T>
 void
 selection_sort (std::vector<T>& data)
 {
-  auto const n = data.size ();
-
-  for (uint32_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < data.size (); ++i)
     {
-      uint32_t j_min = i;
+      size_t j_min = i;
 
-      for (uint32_t j = i + 1; j < n; ++j)
+      for (size_t j = i + 1; j < data.size (); ++j)
         {
           if (data[j] < data[j_min])
             {

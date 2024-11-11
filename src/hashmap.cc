@@ -7,40 +7,43 @@
 #include <cassert>
 #include <cstdint>
 #include <utility>
+#include <algorithm>
 
 class hashmap final
 {
 public:
   hashmap ()
-    : _buckets (_capacity),
-      _size {0}
-  {}
+    : _size {0}
+  {
+    _data.resize (_buckets);
+  }
 
   ~hashmap () = default;
 
   bool
   put (std::string const& key, std::string const& value)
   {
-    if (key.empty ())
+    if (key.empty () || value.empty ())
       {
         return false;
       }
 
-    auto hash_value = hash_function (key);
-    auto& list = _buckets[hash_value];
+    auto hash_key = hash_function (key);
+    auto& list = _data[hash_key];
 
-    for (auto& [k, v] : list)
+    auto it = std::find_if (list.begin (), list.end (), [&key] (std::pair<std::string, std::string> const& arg) {
+      return arg.first == key;
+    });
+
+    if (it != list.end ())
       {
-        if (k == key)
-          {
-            v = value;
-            return true;
-          }
+        it->second = value;
       }
-
-    list.emplace_back (key, value);
-
-    ++_size;
+    else
+      {
+        list.emplace_back (key, value);
+        ++_size;
+      }
 
     return true;
   }
@@ -53,8 +56,8 @@ public:
         return std::nullopt;
       }
 
-    auto hash_value = hash_function (key);
-    auto& list = _buckets[hash_value];
+    auto hash_key = hash_function (key);
+    auto& list = _data[hash_key];
 
     for (auto const& [k, v] : list)
       {
@@ -75,23 +78,23 @@ public:
         return false;
       }
 
-    auto hash_value = hash_function (key);
-    auto& list = _buckets[hash_value];
+    auto hash_key = hash_function (key);
+    auto& list = _data[hash_key];
 
-    for (auto it = list.begin (); it != list.end (); ++it)
+    auto erased = list.remove_if ([&key] (std::pair<std::string, std::string> const& arg) {
+      return key == arg.first;
+    });
+
+    if (erased != 0)
       {
-        if (it->first == key)
-          {
-            list.erase (it);
-            --_size;
-            return true;
-          }
+        --_size;
+        return true;
       }
 
     return false;
   }
 
-  uint32_t
+  size_t
   size () const
   {
     return _size;
@@ -104,15 +107,16 @@ public:
   }
 
 private:
-  uint32_t
-  hash_function (std::string const& key) const
+  static int constexpr _buckets {10};
+
+  size_t
+  hash_function (std::string const& str) const
   {
-    return std::hash<std::string>()(key) % _capacity;
+    return std::hash<std::string> () (str) % _buckets;
   }
 
-  static uint32_t constexpr _capacity {10};
-  std::vector<std::list<std::pair<std::string, std::string>>> _buckets;
-  uint32_t _size;
+  std::vector<std::list<std::pair<std::string, std::string>>> _data;
+  size_t _size;
 };
 
 int

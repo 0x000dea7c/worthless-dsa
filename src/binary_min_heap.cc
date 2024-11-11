@@ -1,47 +1,43 @@
 #include <vector>
 #include <cassert>
-#include <cstdint>
-#include <limits>
 #include <iostream>
 #include <optional>
 
 class binary_min_heap final
 {
 public:
-  binary_min_heap (uint32_t capacity)
+  binary_min_heap (size_t capacity)
     : _size  {0},
       _index {0}
   {
     if (capacity == 0)
       {
-        throw std::runtime_error ("Capacity is 0.");
+        throw std::runtime_error ("Capacity is 0");
       }
 
-    _data.resize (capacity + 1);
+    _data.resize (capacity);
   }
 
   ~binary_min_heap () = default;
 
   void
-  insert (int32_t value)
+  insert (int value)
   {
-    auto const cap = _data.capacity ();
-
-    if (_size + 1 == cap)
+    if (_size + 1 == _data.capacity ())
       {
-        _data.resize (cap * 2);
+        _data.resize (_data.capacity () * 2);
       }
 
-    uint32_t hole = ++_index;
+    _data[0] = std::move (value);
 
-    _data[0] = value;
+    size_t hole = ++_index;
 
     for ( ; _data[0] < _data[hole / 2]; hole /= 2)
       {
-        _data[hole] = _data[hole / 2];
+        _data[hole] = std::move (_data[hole / 2]);
       }
 
-    _data[hole] = _data[0];
+    _data[hole] = std::move (_data[0]);
 
     ++_size;
   }
@@ -51,7 +47,7 @@ public:
   {
     if (empty ())
       {
-        throw std::runtime_error ("Heap is empty.");
+        return;
       }
 
     _data[1] = _data[_index--];
@@ -61,7 +57,7 @@ public:
     --_size;
   }
 
-  std::optional<int32_t>
+  std::optional<int>
   get_min () const
   {
     if (empty ())
@@ -78,7 +74,7 @@ public:
     return size () == 0;
   }
 
-  uint32_t
+  size_t
   size () const
   {
     return _size;
@@ -86,23 +82,23 @@ public:
 
 private:
   void
-  percolate_down (uint32_t hole)
+  percolate_down (size_t hole)
   {
-    int32_t hole_value = _data[hole];
-    uint32_t child;
+    int hole_value = std::move (_data[hole]);
+    size_t child;
 
     for ( ; hole * 2 <= _index; hole *= 2)
       {
         child = hole * 2;
 
-        if (child != _index && _data[child + 1] < _data[child])
+        if (hole < _index && _data[child + 1] < _data[child])
           {
             ++child;
           }
 
         if (_data[child] < _data[hole])
           {
-            _data[hole] = _data[child];
+            _data[hole] = std::move (_data[child]);
           }
         else
           {
@@ -110,12 +106,12 @@ private:
           }
       }
 
-    _data[hole] = hole_value;
+    _data[hole] = std::move (hole_value);
   }
 
-  std::vector<int32_t> _data;
-  uint32_t _size;
-  uint32_t _index;
+  std::vector<int> _data;
+  size_t _size;
+  size_t _index;
 };
 
 int

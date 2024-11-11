@@ -8,55 +8,55 @@
 // DCC (divide, conquer, combine), O(n log n)
 template<typename T>
 void
-merge (std::vector<T>& data, uint32_t start, uint32_t mid, uint32_t end)
+merge (std::vector<T>& data, int32_t start, int32_t mid, int32_t end)
 {
   auto const n1 = mid - start + 1;
   auto const n2 = end - mid;
 
   std::vector<T> left_half (n1), right_half (n2);
 
-  for (uint32_t i = 0; i < n1; ++i)
+  for (int32_t i = 0; i < n1; ++i)
     {
-      left_half[i] = std::move (data[start + i]);
+      left_half[i] = data[start + i];
     }
 
-  for (uint32_t j = 0; j < n2; ++j)
+  for (int32_t j = 0; j < n2; ++j)
     {
-      right_half[j] = std::move (data[mid + j + 1]);
+      right_half[j] = data[j + mid + 1];
     }
 
-  uint32_t i = 0, j = 0, k = start;
+  int32_t i = 0, j = 0, k = start;
 
   while (i < n1 && j < n2)
     {
       if (left_half[i] <= right_half[j])
         {
-          data[k++] = std::move (left_half[i++]);
+          data[k++] = left_half[i++];
         }
       else
         {
-          data[k++] = std::move (right_half[j++]);
+          data[k++] = right_half[j++];
         }
     }
 
   while (i < n1)
     {
-      data[k++] = std::move (left_half[i++]);
+      data[k++] = left_half[i++];
     }
 
   while (j < n2)
     {
-      data[k++] = std::move (right_half[j++]);
+      data[k++] = right_half[j++];
     }
 }
 
 template<typename T>
 void
-mergesort (std::vector<T>& data, uint32_t start, uint32_t end)
+mergesort (std::vector<T>& data, int32_t start, int32_t end)
 {
   if (start < end)
     {
-      uint32_t mid = start + ((end - start) / 2);
+      int32_t mid = start + ((end - start) / 2);
 
       mergesort (data, start, mid);
       mergesort (data, mid + 1, end);

@@ -1,5 +1,4 @@
 #include <cassert>
-#include <cstdint>
 #include <iostream>
 #include <vector>
 
@@ -8,12 +7,12 @@
 class circular_queue final
 {
 public:
-  circular_queue (uint32_t capacity)
-    : _front    {0},
-      _rear     {0},
-      _size     {0}
+  circular_queue (size_t capacity)
+    : _front {0},
+      _back  {0},
+      _size  {0}
   {
-    assert (capacity != 0);
+    assert (capacity > 0);
     _data.resize (capacity);
   }
 
@@ -22,16 +21,19 @@ public:
   bool
   enqueue (std::string const& value)
   {
-    auto const cap = _data.capacity ();
-
-    if (_size == cap)
+    if (value.empty ())
       {
         return false;
       }
 
-    _data[_rear] = value;
+    if (_size == capacity ())
+      {
+        return false;
+      }
 
-    _rear = (_rear + 1) % cap;
+    _data[_back] = value;
+
+    _back = (_back + 1) % capacity ();
 
     ++_size;
 
@@ -46,10 +48,9 @@ public:
         return false;
       }
 
-    // Get rid of strings that won't be used so you save memory.
     _data[_front].clear ();
 
-    _front = (_front + 1) % _data.capacity ();
+    _front = (_front + 1) % capacity ();
 
     --_size;
 
@@ -75,8 +76,19 @@ public:
         return std::nullopt;
       }
 
-    // NOTE: _rear just wrapped back to the beginning, so need to check for that!
-    return (_rear == 0) ? _data[_data.capacity () - 1] : _data[_rear - 1];
+    return _back == 0 ? _data.back () : _data[_back - 1];
+  }
+
+  size_t
+  capacity () const
+  {
+    return _data.capacity ();
+  }
+
+  size_t
+  size () const
+  {
+    return _size;
   }
 
   bool
@@ -85,23 +97,11 @@ public:
     return size () == 0;
   }
 
-  uint32_t
-  size () const
-  {
-    return _size;
-  }
-
-  uint32_t
-  capacity () const
-  {
-    return _data.capacity ();
-  }
-
 private:
   std::vector<std::string> _data;
-  uint32_t _front;
-  uint32_t _rear;
-  uint32_t _size;
+  size_t _front;
+  size_t _back;
+  size_t _size;
 };
 
 int

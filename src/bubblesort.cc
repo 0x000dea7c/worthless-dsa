@@ -19,8 +19,8 @@ bubblesort (std::vector<T>& data)
         {
           if (data[j] > data[j + 1])
             {
-              std::swap (data[j], data[j + 1]);
               swapped = true;
+              std::swap (data[j], data[j + 1]);
             }
         }
 

@@ -1,11 +1,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <stdexcept>
 #include <iostream>
-
-using u32 = std::uint32_t;
-using i32 = std::int32_t;
 
 class dynamic_array final
 {
