@@ -1,39 +1,35 @@
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <cassert>
-#include <cstdint>
-
-using u32 = std::uint32_t;
-using i32 = std::int32_t;
+#include <string>
 
 class doubly_linked_list final
 {
 public:
-  doubly_linked_list ()
-    : _head {nullptr},
-      _tail {nullptr},
-      _size {0}
-  {
-  }
+  doubly_linked_list () : _head{nullptr}, _tail{nullptr}, _size{0} {}
 
   ~doubly_linked_list ()
   {
-    node* current {_head};
+    auto *node{_head};
 
-    while (current)
+    while (node)
       {
-        auto* n = current->_next;
-        delete current;
-        current = n;
+        auto *next = node->_next;
+        delete node;
+        node = next;
       }
   }
 
-  void
-  append (i32 value)
+  void append (std::string const &value)
   {
+    if (value.empty ())
+      {
+        return;
+      }
+
     if (empty ())
       {
-        _head = _tail = new node (nullptr, nullptr, value);
+        _head = _tail = new node (_tail, nullptr, value);
       }
     else
       {
@@ -44,12 +40,16 @@ public:
     ++_size;
   }
 
-  void
-  prepend (i32 value)
+  void prepend (std::string const &value)
   {
+    if (value.empty ())
+      {
+        return;
+      }
+
     if (empty ())
       {
-        _head = _tail = new node (nullptr, nullptr, value);
+        _head = _tail = new node (nullptr, _head, value);
       }
     else
       {
@@ -60,61 +60,56 @@ public:
     ++_size;
   }
 
-  void
-  remove (i32 value)
+  void remove (std::string const &value)
   {
-    if (empty ())
-      return;
+    if (value.empty () || empty ())
+      {
+        return;
+      }
 
     if (_head->_value == value)
       {
-        auto* tmp = _head->_next;
+        auto *tmp = _head->_next;
         delete _head;
-
+        _head = tmp;
         if (tmp)
           {
-            tmp->_prev = nullptr;
+            _head->_prev = nullptr;
           }
-
-        _head = tmp;
       }
     else if (_tail->_value == value)
       {
-        auto* tmp = _tail->_prev;
+        auto *tmp = _tail->_prev;
         delete _tail;
-
+        _tail = tmp;
         if (tmp)
           {
             tmp->_next = nullptr;
           }
-
-        _tail = tmp;
       }
     else
       {
-        node* current {_head->_next};
+        auto *node = _head->_next;
 
-        while (current && current->_value != value)
+        while (node && node->_value != value)
           {
-            current = current->_next;
+            node = node->_next;
           }
 
-        if (!current)
+        if (!node)
           {
             return;
           }
 
-        current->_prev->_next = current->_next;
-        current->_next->_prev = current->_prev;
-
-        delete current;
+        node->_prev->_next = node->_next;
+        node->_next->_prev = node->_prev;
+        delete node;
       }
 
     --_size;
   }
 
-  bool
-  contains (i32 value) const
+  bool contains (std::string const &value) const
   {
     if (empty ())
       {
@@ -130,98 +125,100 @@ public:
         return true;
       }
 
-    node* current {_head->_next};
+    auto *node = _head->_next;
 
-    while (current && current->_value != value)
-      current = current->_next;
+    while (node)
+      {
+        if (node->_value == value)
+          {
+            return true;
+          }
 
-    return current != nullptr;
+        node = node->_next;
+      }
+
+    return false;
   }
 
-  void
-  display () const
+  void display () const
   {
-    node* current {_head};
+    auto *node = _head;
 
-    while (current)
+    while (node)
       {
-        std::cout << current->_value << ' ';
-        current = current->_next;
+        std::cout << node->_value << ' ';
+        node = node->_next;
       }
 
     std::cout << '\n';
   }
 
-  u32
-  size () const
-  {
-    return _size;
-  }
+  size_t size () const { return _size; }
 
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
+  bool empty () const { return size () == 0; }
 
 private:
   struct node final
   {
-    node* _prev;
-    node* _next;
-    i32 _value;
+    node (node *prev, node *next, std::string value) : _prev{prev}, _next{next}, _value{value} {}
+
+    node *_prev;
+    node *_next;
+    std::string _value;
   };
 
-  node* _head;
-  node* _tail;
-  u32   _size;
+  node *_head;
+  node *_tail;
+  size_t _size;
 };
 
 int
 main ()
 {
+  using namespace std::string_literals;
+
   doubly_linked_list list;
 
   // Test appending elements
-  list.append (1);
-  list.append (2);
-  list.append (3);
+  list.append ("1"s);
+  list.append ("2"s);
+  list.append ("3"s);
   assert (list.size () == 3);
-  assert (list.contains (1));
-  assert (list.contains (2));
-  assert (list.contains (3));
+  assert (list.contains ("1"s));
+  assert (list.contains ("2"s));
+  assert (list.contains ("3"s));
 
   // Test prepending elements
-  list.prepend (0);
+  list.prepend ("0"s);
   assert (list.size () == 4);
-  assert (list.contains (0));
+  assert (list.contains ("0"s));
 
   // Test removing elements
-  list.remove (0);
+  list.remove ("0"s);
   assert (list.size () == 3);
-  assert (!list.contains (0));
+  assert (!list.contains ("0"s));
 
-  list.remove (2);
+  list.remove ("2"s);
   assert (list.size () == 2);
-  assert (! list.contains (2));
+  assert (!list.contains ("2"s));
 
-  list.remove (3);
+  list.remove ("3"s);
   assert (list.size () == 1);
-  assert (! list.contains (3));
+  assert (!list.contains ("3"s));
 
-  list.remove (1);
+  list.remove ("1"s);
   assert (list.size () == 0);
-  assert (! list.contains (1));
+  assert (!list.contains ("1"s));
   assert (list.empty ());
 
   // Test removing from an empty list
-  list.remove (1); // Should not crash
+  list.remove ("1"s); // Should not crash
   assert (list.size () == 0);
 
-  list.append (1);
-  list.append (2);
-  list.append (3);
-  list.append (4);		// ensure destructor releases resources
+  list.append ("1"s);
+  list.append ("2"s);
+  list.append ("3"s);
+  list.append ("4"s); // ensure destructor releases resources
 
   list.display ();
 
