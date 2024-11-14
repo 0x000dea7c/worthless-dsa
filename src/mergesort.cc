@@ -6,30 +6,30 @@
 #include <vector>
 
 // DCC (divide, conquer, combine), O(n log n)
-template<typename T>
+template <typename T>
 void
-merge (std::vector<T>& data, int32_t start, int32_t mid, int32_t end)
+merge (std::vector<T> &data, size_t start, size_t mid, size_t end)
 {
-  auto const n1 = mid - start + 1;
-  auto const n2 = end - mid;
+  std::vector<T> left_half (mid - start + 1);
+  std::vector<T> right_half (end - mid);
 
-  std::vector<T> left_half (n1), right_half (n2);
+  size_t i = 0, j = 0, k = start;
 
-  for (int32_t i = 0; i < n1; ++i)
+  for (; i < left_half.size (); ++i)
     {
       left_half[i] = data[start + i];
     }
 
-  for (int32_t j = 0; j < n2; ++j)
+  for (; j < right_half.size (); ++j)
     {
-      right_half[j] = data[j + mid + 1];
+      right_half[j] = data[mid + 1 + j];
     }
 
-  int32_t i = 0, j = 0, k = start;
+  i = j = 0;
 
-  while (i < n1 && j < n2)
+  while (i < left_half.size () && j < right_half.size ())
     {
-      if (left_half[i] <= right_half[j])
+      if (left_half[i] < right_half[j])
         {
           data[k++] = left_half[i++];
         }
@@ -39,35 +39,33 @@ merge (std::vector<T>& data, int32_t start, int32_t mid, int32_t end)
         }
     }
 
-  while (i < n1)
+  while (i < left_half.size ())
     {
       data[k++] = left_half[i++];
     }
 
-  while (j < n2)
+  while (j < right_half.size ())
     {
       data[k++] = right_half[j++];
     }
 }
 
-template<typename T>
+template <typename T>
 void
-mergesort (std::vector<T>& data, int32_t start, int32_t end)
+mergesort (std::vector<T> &data, size_t start, size_t end)
 {
   if (start < end)
     {
-      int32_t mid = start + ((end - start) / 2);
-
+      size_t mid = start + ((end - start) / 2);
       mergesort (data, start, mid);
       mergesort (data, mid + 1, end);
-
       merge (data, start, mid, end);
     }
 }
 
-template<typename T>
+template <typename T>
 void
-sort (std::vector<T>& data)
+sort (std::vector<T> &data)
 {
   if (data.empty () || data.size () == 1)
     {
@@ -84,7 +82,7 @@ main ()
 
   {
     // Already sorted, shouldn't do anything.
-    std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
+    std::vector<std::string> data{"alligator"s, "befriend"s, "colour"s};
 
     sort (data);
 
@@ -95,22 +93,9 @@ main ()
 
   {
     // Worst case scenario.
-    std::vector<std::string> data {
-      "zhang"s,
-      "yoshika"s,
-      "xiye"s,
-      "wai"s,
-      "victoria"s,
-      "terry"s,
-      "simon",
-      "rose"s,
-      "qing"s,
-      "petra"s,
-      "oliver"s,
-      "nana"s,
-      "maria"s,
-      "lucas"s,
-      "keiko"s,
+    std::vector<std::string> data{
+      "zhang"s, "yoshika"s, "xiye"s,   "wai"s,  "victoria"s, "terry"s, "simon",  "rose"s,
+      "qing"s,  "petra"s,   "oliver"s, "nana"s, "maria"s,    "lucas"s, "keiko"s,
     };
 
     sort (data);
@@ -134,9 +119,7 @@ main ()
 
   {
     // Even number of elements.
-    std::vector<std::string> data {
-      "here", "we", "go", "even", "number", "of", "elements", "here"
-    };
+    std::vector<std::string> data{"here", "we", "go", "even", "number", "of", "elements", "here"};
 
     sort (data);
 
@@ -152,7 +135,7 @@ main ()
 
   {
     // Odd number of elements.
-    std::vector<std::string> data {
+    std::vector<std::string> data{
       "here", "we", "go", "even", "number", "of", "elements",
     };
 

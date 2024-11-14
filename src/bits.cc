@@ -47,7 +47,7 @@ clear_all_bits_through_end (i32 n, u32 bitn)
 u32
 update_bit (i32 n, u32 bitn, u32 bit_value)
 {
-  bit_value = (bit_value == 0) ? 0 : 1;
+  bit_value = (bit_value > 0) ? 1 : 0;
   i32 mask = ~(1 << bitn);
   return (n & mask) | (bit_value << bitn);
 }
@@ -55,11 +55,11 @@ update_bit (i32 n, u32 bitn, u32 bit_value)
 int
 main ()
 {
-  i32 number {0b1010};
+  i32 number{0b1010};
 
   assert (clear_bit (number, 3) == 0b0010);
-  assert (set_bit (number, 0)   == 0b1011);
-  assert (get_bit (number, 3)   == 1);
+  assert (set_bit (number, 0) == 0b1011);
+  assert (get_bit (number, 3) == 1);
   assert (clear_msb_bits_through_bit (number, 1) == 0b0);
   assert (clear_msb_bits_through_bit_second_version (number, 1) == 0b0);
 

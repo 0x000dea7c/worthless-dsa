@@ -6,10 +6,7 @@
 class binary_search_tree final
 {
 public:
-  binary_search_tree ()
-    : _root {nullptr},
-      _size {0}
-  {}
+  binary_search_tree () : _root{nullptr}, _size{0} {}
 
   ~binary_search_tree ()
   {
@@ -18,12 +15,12 @@ public:
         return;
       }
 
-    std::stack<node*> nodes;
+    std::stack<node *> nodes;
     nodes.push (_root);
 
-    while (! nodes.empty ())
+    while (!nodes.empty ())
       {
-        auto* n = nodes.top ();
+        auto *n = nodes.top ();
 
         nodes.pop ();
 
@@ -37,8 +34,7 @@ public:
       }
   }
 
-  void
-  insert (std::string const& key, std::string const& value)
+  void insert (std::string const &key, std::string const &value)
   {
     if (key.empty ())
       {
@@ -48,8 +44,7 @@ public:
     insert (key, value, _root);
   }
 
-  bool
-  remove (std::string const& key)
+  bool remove (std::string const &key)
   {
     if (key.empty ())
       {
@@ -59,8 +54,7 @@ public:
     return remove (key, _root);
   }
 
-  bool
-  contains (std::string const& key) const
+  bool contains (std::string const &key) const
   {
     if (key.empty ())
       {
@@ -70,54 +64,30 @@ public:
     return contains (key, _root);
   }
 
-  bool
-  empty () const
-  {
-    return _root == nullptr;
-  }
+  bool empty () const { return _root == nullptr; }
 
-  void
-  preorder_print () const
-  {
-    preorder_print (_root);
-  }
+  void preorder_print () const { preorder_print (_root); }
 
-  void
-  inorder_print () const
-  {
-    inorder_print (_root);
-  }
+  void inorder_print () const { inorder_print (_root); }
 
-  void
-  postorder_print () const
-  {
-    postorder_print (_root);
-  }
+  void postorder_print () const { postorder_print (_root); }
 
-  std::optional<std::string>
-  get (std::string const& key) const
-  {
-    return get (key, _root);
-  }
+  std::optional<std::string> get (std::string const &key) const { return get (key, _root); }
 
 private:
   struct node final
   {
-    node (node* left, node* right, std::string const& key, std::string const& value)
-      : _left {left},
-        _right {right},
-        _key {key},
-        _value {value}
+    node (node *left, node *right, std::string const &key, std::string const &value)
+      : _left{left}, _right{right}, _key{key}, _value{value}
     {}
 
-    node* _left;
-    node* _right;
+    node *_left;
+    node *_right;
     std::string _key;
     std::string _value;
   };
 
-  std::optional<std::string>
-  get (std::string const& key, node* root) const
+  std::optional<std::string> get (std::string const &key, node *root) const
   {
     if (root == nullptr)
       {
@@ -137,8 +107,7 @@ private:
       }
   }
 
-  void
-  insert (std::string const& key, std::string const& value, node*& root)
+  void insert (std::string const &key, std::string const &value, node *&root)
   {
     if (root == nullptr)
       {
@@ -158,8 +127,7 @@ private:
       }
   }
 
-  bool
-  remove (std::string const& key, node*& root)
+  bool remove (std::string const &key, node *&root)
   {
     if (root == nullptr)
       {
@@ -169,7 +137,7 @@ private:
       {
         return remove (key, root->_right);
       }
-    else if(key < root->_key)
+    else if (key < root->_key)
       {
         return remove (key, root->_left);
       }
@@ -177,14 +145,14 @@ private:
       {
         if (root->_left && root->_right)
           {
-            node* min = find_min (root->_right);
+            node *min = find_min (root->_right);
             root->_key = std::move (min->_key);
             root->_value = std::move (min->_value);
             return remove (key, root->_right);
           }
         else
           {
-            node* n = (root->_left) ? root->_left : root->_right;
+            node *n = (root->_left) ? root->_left : root->_right;
             delete root;
             root = n;
             return true;
@@ -192,8 +160,7 @@ private:
       }
   }
 
-  bool
-  contains (std::string const& key, node* root) const
+  bool contains (std::string const &key, node *root) const
   {
     if (root == nullptr)
       {
@@ -213,19 +180,17 @@ private:
       }
   }
 
-  void
-  preorder_print (node* root) const
+  void preorder_print (node *root) const
   {
-    if (root != nullptr)
+    if (root)
       {
-        std::cout << root->_key << ' ';
+        std::cout << root->_value << ' ';
         preorder_print (root->_left);
         preorder_print (root->_right);
       }
   }
 
-  void
-  inorder_print (node* root) const
+  void inorder_print (node *root) const
   {
     if (root != nullptr)
       {
@@ -235,8 +200,7 @@ private:
       }
   }
 
-  void
-  postorder_print (node* root) const
+  void postorder_print (node *root) const
   {
     if (root != nullptr)
       {
@@ -246,8 +210,7 @@ private:
       }
   }
 
-  node*
-  find_min (node* root) const
+  node *find_min (node *root) const
   {
     while (root->_left != nullptr)
       {
@@ -256,7 +219,7 @@ private:
     return root;
   }
 
-  node* _root;
+  node *_root;
   uint64_t _size;
 };
 
@@ -282,7 +245,7 @@ main ()
 
     assert (tree.get ("jump"s) == "crouch"s);
 
-    assert (! tree.empty ());
+    assert (!tree.empty ());
 
     tree.remove ("self"s);
     tree.remove ("basic"s);
@@ -312,7 +275,7 @@ main ()
     tree.insert ("very"s, "stupid"s);
     tree.insert ("be"s, "sorry"s);
 
-    assert (! tree.empty ());
+    assert (!tree.empty ());
 
     assert (tree.contains ("i"s));
     assert (tree.contains ("very"s));
@@ -321,7 +284,7 @@ main ()
     assert (tree.remove ("very"s));
     assert (tree.remove ("be"s));
 
-    assert (! tree.empty ());
+    assert (!tree.empty ());
     assert (tree.get ("i"s) == "am"s);
   }
 

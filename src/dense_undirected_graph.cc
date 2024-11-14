@@ -1,183 +1,203 @@
 #include <cstdlib>
 #include <cassert>
-#include <cstdint>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include <iostream>
 #include <queue>
-
-using i32 = std::int32_t;
-using u32 = std::uint32_t;
+#include <limits>
 
 class dense_undirected_graph final
 {
 public:
-  dense_undirected_graph (std::vector<std::string>& vertices)
+  dense_undirected_graph (std::vector<std::string> &vertices) : _index{0}
   {
-    _matrix.resize (vertices.size (), std::vector<bool> (vertices.size (), false));
+    _matrix.resize (vertices.size (), std::vector<size_t> (vertices.size (), 0));
 
-    for (u32 i {}; i < vertices.size (); ++i)
+    for (auto const &vertex : vertices)
       {
-	_index_to_key[i] = vertices[i];
-	_key_to_index[vertices[i]] = i;
+        _key_to_index[vertex] = _index;
+        _index_to_key[_index] = vertex;
+        ++_index;
       }
   }
 
   ~dense_undirected_graph () = default;
 
-  void
-  add_edge (std::string const& src, std::string const& dst)
+  bool add_edge (std::string const &src, std::string const &dst)
   {
-    if (src.empty () || dst.empty () ||
-	_key_to_index.count (src) == 0 ||
-	_key_to_index.count (dst) == 0)
-      return;
+    assert (!src.empty ());
+    assert (!dst.empty ());
 
-    auto src_id = _key_to_index.at (src);
-    auto dst_id = _key_to_index.at (dst);
-
-    _matrix[src_id][dst_id] = true;
-    _matrix[dst_id][src_id] = true;
-  }
-
-  void
-  remove_edge (std::string const& src, std::string const& dst)
-  {
-    if (src.empty () || dst.empty () ||
-	_key_to_index.count (src) == 0 ||
-	_key_to_index.count (dst) == 0)
-      return;
-
-    auto src_id = _key_to_index.at (src);
-    auto dst_id = _key_to_index.at (dst);
-
-    _matrix[src_id][dst_id] = false;
-    _matrix[dst_id][src_id] = false;
-  }
-
-  bool
-  has_edge (std::string const& src, std::string const& dst) const
-  {
-    if (src.empty () || dst.empty () ||
-	_key_to_index.count (src) == 0 ||
-	_key_to_index.count (dst) == 0)
-      return false;
-
-    auto src_id = _key_to_index.at (src);
-    auto dst_id = _key_to_index.at (dst);
-
-    return _matrix[src_id][dst_id];
-  }
-
-  bool
-  has_cycle_helper (u32 vertex, u32 parent, std::unordered_set<u32>& visited) const
-  {
-    visited.emplace (vertex);
-
-    for (u32 i {}; i < _matrix[vertex].size (); ++i)
+    if (_key_to_index.count (src) == 0 || _key_to_index.count (dst) == 0)
       {
-	if (_matrix[vertex][i] && visited.count (i) == 0)
-	  {
-	    if (has_cycle_helper (i, vertex, visited))
-	      return true;
-	  }
-	else if (_matrix[vertex][i] && i != parent)
-	  return true;
+        return false;
       }
 
-    return false;
+    auto src_index = _key_to_index[src];
+    auto dst_index = _key_to_index[dst];
+
+    _matrix[src_index][dst_index] = 1;
+    _matrix[dst_index][src_index] = 1;
+
+    return true;
   }
 
-  bool
-  has_cycle () const
+  bool remove_edge (std::string const &src, std::string const &dst)
   {
-    std::unordered_set<u32> visited;
+    assert (!src.empty ());
+    assert (!dst.empty ());
 
-    for (u32 i {}; i < _matrix.size (); ++i)
+    if (_key_to_index.count (src) == 0 || _key_to_index.count (dst) == 0)
       {
-	if (visited.count (i) == 0)
-	  {
-	    if (has_cycle_helper (i, std::numeric_limits<u32>::max (), visited))
-	      return true;
-	  }
+        return false;
       }
 
-    return false;
+    auto src_index = _key_to_index[src];
+    auto dst_index = _key_to_index[dst];
+
+    _matrix[src_index][dst_index] = 0;
+    _matrix[dst_index][src_index] = 0;
+
+    return true;
   }
 
-  void
-  dfs_helper (u32 vertex, std::unordered_set<u32>& visited) const
+  bool has_edge (std::string const &src, std::string const &dst) const
+  {
+    assert (!src.empty ());
+    assert (!dst.empty ());
+
+    if (_key_to_index.count (src) == 0 || _key_to_index.count (dst) == 0)
+      {
+        return false;
+      }
+
+    auto src_index = _key_to_index.at (src);
+    auto dst_index = _key_to_index.at (dst);
+
+    return _matrix[src_index][dst_index] == 1;
+  }
+
+  void dfs_helper (size_t vertex, std::set<size_t> &visited) const
   {
     visited.emplace (vertex);
 
     std::cout << _index_to_key.at (vertex) << ' ';
 
-    for (u32 i {}; i < _matrix[vertex].size (); ++i)
+    for (size_t i = 0; i < _matrix[vertex].size (); ++i)
       {
-	if (_matrix[vertex][i] && visited.count (i) == 0)
-	  {
-	    dfs_helper (i, visited);
-	  }
+        if (visited.count (i) == 0 && _matrix[vertex][i] != 0)
+          {
+            dfs_helper (i, visited);
+          }
       }
   }
 
-  void
-  dfs () const
+  void dfs () const
   {
-    std::unordered_set<u32> visited;
+    std::set<size_t> visited;
 
-    for (u32 i {}; i < _matrix.size (); ++i)
+    for (size_t i = 0; i < _matrix.size (); ++i)
       {
-	if (visited.count (i) == 0)
-	  {
-	    dfs_helper (i, visited);
-	  }
+        for (size_t j = 0; j < _matrix.size (); ++j)
+          {
+            if (visited.count (j) == 0)
+              {
+                dfs_helper (j, visited);
+              }
+          }
       }
 
     std::cout << '\n';
   }
 
-  void
-  bfs () const
+  void bfs () const
   {
-    std::unordered_set<u32> visited;
-    std::queue<u32> current_vertices;
+    std::queue<size_t> current_vertices;
+    std::set<size_t> visited;
 
-    for (u32 i {}; i < _matrix.size (); ++i)
+    for (auto const &row : _matrix)
       {
-	if (visited.count (i) == 0)
-	  {
-	    visited.emplace (i);
-	    current_vertices.emplace (i);
+        for (auto const &index : row)
+          {
+            if (visited.count (index) == 0)
+              {
+                visited.emplace (index);
+                current_vertices.emplace (index);
 
-	    while (! current_vertices.empty ())
-	      {
-		auto current_vertex = current_vertices.front ();
+                while (!current_vertices.empty ())
+                  {
+                    auto curr = current_vertices.front ();
 
-		current_vertices.pop ();
+                    current_vertices.pop ();
 
-		std::cout << _index_to_key.at (current_vertex) << ' ';
+                    std::cout << _index_to_key.at (curr) << ' ';
 
-		for (u32 j {}; j < _matrix[current_vertex].size (); ++j)
-		  {
-		    if (_matrix[current_vertex][j] && visited.count (j) == 0)
-		      {
-			current_vertices.emplace (j);
-			visited.emplace (j);
-		      }
-		  }
-	      }
-	  }
+                    for (size_t i = 0; i < _matrix[curr].size (); ++i)
+                      {
+                        if (visited.count (i) == 0 && _matrix[curr][i] != 0)
+                          {
+                            visited.emplace (i);
+                            current_vertices.emplace (i);
+                          }
+                      }
+                  }
+              }
+          }
       }
+
     std::cout << '\n';
+  }
+
+  bool has_cycle_helper (size_t vertex, size_t parent, std::set<size_t> &visited) const
+  {
+    visited.emplace (vertex);
+
+    for (size_t i = 0; i < _matrix.size (); ++i)
+      {
+        if (visited.count (i) == 0 && _matrix[vertex][i] != 0)
+          {
+            if (has_cycle_helper (i, vertex, visited))
+              {
+                return true;
+              }
+          }
+        else if (_matrix[vertex][i] != 0 && i != parent)
+          {
+            return true;
+          }
+      }
+
+    return false;
+  }
+
+  bool has_cycle () const
+  {
+    std::set<size_t> visited;
+
+    for (size_t i = 0; i < _matrix.size (); ++i)
+      {
+        for (size_t j = 0; j < _matrix.size (); ++j)
+          {
+            if (visited.count (j) == 0)
+              {
+                if (has_cycle_helper (j, std::numeric_limits<size_t>::max (), visited))
+                  {
+                    return true;
+                  }
+              }
+          }
+      }
+
+    return false;
   }
 
 private:
-  std::unordered_map<std::string, u32> _key_to_index;
-  std::unordered_map<u32, std::string> _index_to_key;
-  std::vector<std::vector<bool>> _matrix;
+  std::map<std::string, size_t> _key_to_index;
+  std::map<size_t, std::string> _index_to_key;
+  std::vector<std::vector<size_t>> _matrix;
+  size_t _index;
 };
 
 int
@@ -185,9 +205,7 @@ main ()
 {
   using namespace std::string_literals;
 
-  std::vector<std::string> vertices {
-    "0"s, "1"s, "2"s, "3"s, "4"s, "5"s, "6"s, "7"s
-  };
+  std::vector<std::string> vertices{"0"s, "1"s, "2"s, "3"s, "4"s, "5"s, "6"s, "7"s};
 
   dense_undirected_graph graph (vertices);
 
@@ -211,7 +229,7 @@ main ()
   assert (graph.has_edge ("1"s, "4"s));
   assert (graph.has_edge ("4"s, "1"s));
 
-  assert (! graph.has_cycle ());
+  assert (!graph.has_cycle ());
 
   std::cout << "...Printing graph...\n";
 
@@ -223,14 +241,14 @@ main ()
 
   graph.remove_edge ("A"s, "B"s);
 
-  assert (! graph.has_edge ("A"s, "B"s));
+  assert (!graph.has_edge ("A"s, "B"s));
 
   // disconnected graph
   std::vector<std::string> vertices2 = {"X"s, "Y"s, "Z"s};
   dense_undirected_graph graph2 (vertices2);
-  assert (! graph2.has_edge ("X"s, "Y"s));
-  assert (! graph2.has_edge ("Y"s, "Z"s));
-  assert (! graph2.has_cycle ());
+  assert (!graph2.has_edge ("X"s, "Y"s));
+  assert (!graph2.has_edge ("Y"s, "Z"s));
+  assert (!graph2.has_cycle ());
 
   // graph with self edge
   std::vector<std::string> vertices3 = {"P"s, "Q"s, "R"s, "T"s};
@@ -240,12 +258,12 @@ main ()
   graph3.add_edge ("Q"s, "R"s);
   assert (graph3.has_cycle ());
 
-  assert (graph3.has_edge("P"s, "Q"s));
-  assert (graph3.has_edge("P"s, "R"s));
-  assert (graph3.has_edge("Q"s, "R"s));
+  assert (graph3.has_edge ("P"s, "Q"s));
+  assert (graph3.has_edge ("P"s, "R"s));
+  assert (graph3.has_edge ("Q"s, "R"s));
 
   graph3.add_edge ("P"s, "P"s);
-  assert (graph3.has_edge("P"s, "P"s));
+  assert (graph3.has_edge ("P"s, "P"s));
 
   // this dfs shouldn't show a self-edge (but it's good if you ask)
   std::cout << "...Printing dfs of graph that has a self edge...\n";
@@ -256,12 +274,10 @@ main ()
   // empty graph
   std::vector<std::string> vertices4;
   dense_undirected_graph graph4 (vertices4);
-  assert (! graph4.has_edge ("A"s, "B"s)); // don't crash bitch
-  assert (! graph4.has_cycle ());
+  assert (!graph4.has_edge ("A"s, "B"s)); // don't crash bitch
+  assert (!graph4.has_cycle ());
 
-  std::vector<std::string> vertices5 {
-    "A"s, "B"s, "C"s, "D"s
-  };
+  std::vector<std::string> vertices5{"A"s, "B"s, "C"s, "D"s};
 
   //
   // some more misc testing...
@@ -271,7 +287,7 @@ main ()
   graph5.add_edge ("A"s, "B"s);
   graph5.add_edge ("A"s, "C"s);
   graph5.add_edge ("B"s, "D"s);
-  assert (! graph5.has_cycle ());
+  assert (!graph5.has_cycle ());
 
   std::cout << "...Graph 5 dfs...\n";
   graph5.dfs ();
@@ -279,7 +295,7 @@ main ()
   std::cout << "...Graph 5 bfs...\n";
   graph5.bfs ();
 
-  std::vector<std::string> vertices6 {"A"s, "B"s, "C"s};
+  std::vector<std::string> vertices6{"A"s, "B"s, "C"s};
   dense_undirected_graph graph6 (vertices6);
 
   graph6.add_edge ("A"s, "B"s);

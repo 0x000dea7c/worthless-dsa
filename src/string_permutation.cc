@@ -1,28 +1,24 @@
 #include <string>
 #include <cassert>
 #include <iostream>
-#include <type_traits>
-#include <cstdint>
 #include <vector>
 #include <algorithm>
 
-using u32 = std::uint32_t;
-
 void
-permute (std::string& str, u32 start, u32 end, std::vector<std::string>& permutations)
+permute (std::string &word, size_t start, size_t end, std::vector<std::string> &results)
 {
   if (start == end)
     {
-      permutations.emplace_back (str);
+      results.push_back (word);
     }
   else
     {
-      for (u32 i {start}; i <= end; ++i)
-	{
-	  std::swap (str[start], str[i]);
-	  permute (str, start + 1, end, permutations);
-	  std::swap (str[start], str[i]);
-	}
+      for (size_t i = start; i <= end; ++i)
+        {
+          std::swap (word[i], word[start]);
+          permute (word, start + 1, end, results);
+          std::swap (word[i], word[start]);
+        }
     }
 }
 
@@ -31,7 +27,7 @@ main ()
 {
   using namespace std::string_literals;
 
-  std::string str {"dog"s};
+  std::string str{"dog"s};
   std::vector<std::string> permutations;
 
   permute (str, 0, str.length () - 1, permutations);
