@@ -4,23 +4,22 @@
 #include <string>
 #include <vector>
 
-template<typename T>
+template <typename T>
 void
-bubblesort (std::vector<T>& data)
+bubblesort (std::vector<T> &data)
 {
   auto const n = data.size ();
-  bool swapped;
 
-  for (uint32_t i = 0; i < n - 1; ++i)
+  for (size_t i = 0; i < n; ++i)
     {
-      swapped = false;
+      bool swapped{false};
 
-      for (uint32_t j = 0; j < n - i - 1; ++j)
+      for (size_t j = 0; j < n - i - 1; ++j)
         {
           if (data[j] > data[j + 1])
             {
-              swapped = true;
               std::swap (data[j], data[j + 1]);
+              swapped = true;
             }
         }
 
@@ -31,9 +30,9 @@ bubblesort (std::vector<T>& data)
     }
 }
 
-template<typename T>
+template <typename T>
 void
-sort (std::vector<T>& data)
+sort (std::vector<T> &data)
 {
   if (data.empty () || data.size () == 1)
     {
@@ -50,7 +49,7 @@ main ()
 
   {
     // Already sorted, shouldn't do anything.
-    std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
+    std::vector<std::string> data{"alligator"s, "befriend"s, "colour"s};
 
     sort (data);
 
@@ -61,22 +60,9 @@ main ()
 
   {
     // Worst case scenario.
-    std::vector<std::string> data {
-      "zhang"s,
-      "yoshika"s,
-      "xiye"s,
-      "wai"s,
-      "victoria"s,
-      "terry"s,
-      "simon",
-      "rose"s,
-      "qing"s,
-      "petra"s,
-      "oliver"s,
-      "nana"s,
-      "maria"s,
-      "lucas"s,
-      "keiko"s,
+    std::vector<std::string> data{
+      "zhang"s, "yoshika"s, "xiye"s,   "wai"s,  "victoria"s, "terry"s, "simon",  "rose"s,
+      "qing"s,  "petra"s,   "oliver"s, "nana"s, "maria"s,    "lucas"s, "keiko"s,
     };
 
     sort (data);
@@ -100,9 +86,7 @@ main ()
 
   {
     // Even number of elements.
-    std::vector<std::string> data {
-      "here", "we", "go", "even", "number", "of", "elements", "here"
-    };
+    std::vector<std::string> data{"here", "we", "go", "even", "number", "of", "elements", "here"};
 
     sort (data);
 
@@ -118,7 +102,7 @@ main ()
 
   {
     // Odd number of elements.
-    std::vector<std::string> data {
+    std::vector<std::string> data{
       "here", "we", "go", "even", "number", "of", "elements",
     };
 

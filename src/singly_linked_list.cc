@@ -1,393 +1,218 @@
 #include <cassert>
 #include <iostream>
 #include <cstdlib>
-#include <cstdint>
 
-using u32 = std::uint32_t;
-using i32 = std::int32_t;
+using namespace std::string_literals;
 
 class singly_linked_list final
 {
 public:
-  singly_linked_list ()
-    : _head {nullptr},
-      _tail {nullptr},
-      _size {0}
-  {
-
-  }
+  singly_linked_list () : _head{nullptr}, _tail{nullptr}, _size{0} {}
 
   ~singly_linked_list ()
   {
-    node* current {_head};
+    auto *node = _head;
 
-    while (current != nullptr)
+    while (node)
       {
-	auto* next = current->_next;
-	delete current;
-	current = next;
+        auto *n = node->_next;
+        delete node;
+        node = n;
       }
   }
 
-  void
-  append (i32 value)
+  void append (std::string const &value)
   {
+    assert (!value.empty ());
+
     if (empty ())
       {
-	_head = _tail = new node (nullptr, value);
+        _head = _tail = new node (nullptr, value);
       }
     else
       {
-	auto* n = new node (nullptr, value);
-	_tail->_next = n;
-	_tail = n;
+        _tail->_next = new node (nullptr, value);
+        _tail = _tail->_next;
       }
+
     ++_size;
   }
 
-  void
-  prepend (i32 value)
+  void prepend (std::string const &value)
   {
+    assert (!value.empty ());
+
     if (empty ())
       {
-	_head = _tail = new node (nullptr, value);
+        _head = _tail = new node (nullptr, value);
       }
     else
       {
-	auto* n = new node (_head, value);
-	_head = n;
+        auto *p = new node (_head, value);
+        _head = p;
       }
+
     ++_size;
   }
 
-  void
-  remove (i32 value)
+  bool remove (std::string const &value)
   {
+    assert (!value.empty ());
+
     if (empty ())
-      return;
-
-    if (_head->_value == value)
       {
-	auto* n = _head->_next;
-	delete _head;
-	_head = n;
+        return false;
       }
-    else if (_tail->_value == value)
+    else if (_head->_value == value)
       {
-	node* c {_head};
-
-	while (c->_next != nullptr && c->_next != _tail)
-	  c = c->_next;
-
-	delete _tail;
-	c->_next = nullptr;
-	_tail = c;
+        auto *n = _head->_next;
+        delete _head;
+        _head = n;
       }
     else
       {
-	node* p {nullptr};
-	node* c {_head};
+        node *prev = nullptr;
+        auto *node = _head;
 
-	while (c != nullptr && c->_value != value)
-	  {
-	    p = c;
-	    c = c->_next;
-	  }
+        while (node && node->_value != value)
+          {
+            prev = node;
+            node = node->_next;
+          }
 
-	if (c == nullptr)
-	  return;
+        if (!node)
+          {
+            return false;
+          }
 
-	p->_next = c->_next;
-	delete c;
+        if (node == _tail)
+          {
+            delete _tail;
+            _tail = prev;
+          }
+        else
+          {
+            prev->_next = node->_next;
+            delete node;
+          }
       }
+
     --_size;
+
+    return true;
   }
 
-  bool
-  contains (i32 value) const
+  bool contains (std::string const &value) const
   {
-    if (empty ())
-      return false;
+    auto *node = _head;
 
-    node* c {_head};
-
-    while (c != nullptr && c->_value != value)
-      c = c->_next;
-
-    return c != nullptr;
-  }
-
-  void
-  display () const
-  {
-    if (empty ())
-      return;
-
-    node* c {_head};
-
-    while (c != nullptr)
+    while (node && node->_value != value)
       {
-	std::cout << c->_value << ' ';
-	c = c->_next;
+        node = node->_next;
       }
+
+    return (node) ? true : false;
   }
 
-  u32
-  size () const
+  void display () const
   {
-    return _size;
+    auto *node = _head;
+
+    while (node)
+      {
+        std::cout << node->_value << ' ';
+        node = node->_next;
+      }
+
+    std::cout << '\n';
   }
 
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
+  size_t size () const { return _size; }
+
+  bool empty () const { return size () == 0; }
 
 private:
   struct node final
   {
-    node (node* next, i32 value)
-      : _next  {next},
-	_value {value}
-    {}
-
-    node* _next;
-    i32 _value;
+    node (node *next, std::string const &value) : _next{next}, _value{value} {}
+    node *_next;
+    std::string _value;
   };
 
-  node* _head;
-  node* _tail;
-  u32   _size;
+  node *_head;
+  node *_tail;
+  size_t _size;
 };
-
-// class singly_linked_list final
-// {
-// public:
-//   singly_linked_list ()
-//     : _head {nullptr},
-//       _tail {nullptr},
-//       _size {0}
-//   {}
-
-//   ~singly_linked_list ()
-//   {
-//     node* current {_head};
-
-//     while (current != nullptr)
-//       {
-// 	auto* t = current->_next;
-// 	delete current;
-// 	current = t;
-//       }
-//   }
-
-//   void
-//   append (i32 value)
-//   {
-//     if (empty ())
-//       {
-// 	_head = _tail = new node (nullptr, value);
-//       }
-//     else
-//       {
-// 	auto* t = new node (nullptr, value);
-// 	_tail->_next = t;
-// 	_tail = t;
-//       }
-
-//     ++_size;
-//   }
-
-//   void
-//   prepend (i32 value)
-//   {
-//     if (empty ())
-//       {
-// 	_head = _tail = new node (nullptr, value);
-//       }
-//     else
-//       {
-// 	auto* t = new node (_head, value);
-// 	_head = t;
-//       }
-
-//     ++_size;
-//   }
-
-//   void
-//   remove (i32 value)
-//   {
-//     if (empty ())
-//       return;
-
-//     if (_head->_value == value)
-//       {
-// 	auto* t = _head->_next;
-// 	delete _head;
-// 	_head = t;
-//       }
-//     else if (_tail->_value == value)
-//       {
-// 	node* current {_head};
-
-// 	while (current != nullptr && current->_next != _tail)
-// 	  current = current->_next;
-
-// 	current->_next = nullptr;
-// 	delete _tail;
-// 	_tail = current;
-//       }
-//     else
-//       {
-// 	node* previous {_head};
-// 	node* current  {_head->_next};
-
-// 	while (current != nullptr && current->_value != value)
-// 	  {
-// 	    previous = current;
-// 	    current  = current->_next;
-// 	  }
-
-// 	if (current == nullptr)
-// 	  return;
-
-// 	previous->_next = current->_next;
-// 	delete current;
-//       }
-
-//     --_size;
-//   }
-
-//   bool
-//   contains (i32 value) const
-//   {
-//     if (empty ())
-//       return false;
-
-//     node* current {_head};
-
-//     while (current != nullptr && current->_value != value)
-//       current = current->_next;
-
-//     return (current != nullptr) ? true : false;
-//   }
-
-//   void
-//   display () const
-//   {
-//     if (empty ())
-//       return;
-
-//     node* current {_head};
-
-//     while (current != nullptr)
-//       {
-// 	std::cout << current->_value << ' ';
-// 	current = current->_next;
-//       }
-
-//     std::cout <<  '\n';
-//   }
-
-//   u32
-//   size () const
-//   {
-//     return _size;
-//   }
-
-//   bool
-//   empty () const
-//   {
-//     return size () == 0;
-//   }
-
-// private:
-//   struct node final
-//   {
-//     node (node* next, i32 value)
-//       : _next  {next},
-// 	_value {value}
-//     {}
-
-//     node* _next;
-//     i32 _value;
-//   };
-
-//   node* _head;
-//   node* _tail;
-//   u32   _size;
-// };
 
 int
 main ()
 {
   singly_linked_list list;
-  list.append (1);
-  list.append (2);
-  list.append (3);
+  list.append ("1"s);
+  list.append ("2"s);
+  list.append ("3"s);
 
   assert (list.size () == 3);
-  assert (list.contains (1));
-  assert (list.contains (2));
-  assert (list.contains (3));
+  assert (list.contains ("1"s));
+  assert (list.contains ("2"s));
+  assert (list.contains ("3"s));
 
   singly_linked_list list2;
-  list2.prepend (1);
-  list2.prepend (2);
-  list2.prepend (3);
+  list2.prepend ("1"s);
+  list2.prepend ("2"s);
+  list2.prepend ("3"s);
   assert (list2.size () == 3);
-  assert (list2.contains (1));
-  assert (list2.contains (2));
-  assert (list2.contains (3));
+  assert (list2.contains ("1"s));
+  assert (list2.contains ("2"s));
+  assert (list2.contains ("3"s));
 
   singly_linked_list list3;
-  list3.append (1);
-  list3.append (2);
-  list3.append (3);
-  list3.remove (2);
+  list3.append ("1"s);
+  list3.append ("2"s);
+  list3.append ("3"s);
+  list3.remove ("2"s);
   assert (list3.size () == 2);
-  assert (not list3.contains (2));
+  assert (not list3.contains ("2"s));
 
   singly_linked_list list4;
-  list4.append (1);
-  list4.append (2);
-  list4.remove (3); // Element 3 does not exist
+  list4.append ("1"s);
+  list4.append ("2"s);
+  list4.remove ("3"s); // Element 3 does not exist
   assert (list4.size () == 2);
 
   singly_linked_list list5;
-  list5.append (5);
-  list5.append (10);
-  assert (list5.contains (5) == true);
-  assert (list5.contains (10) == true);
-  assert (list5.contains (15) == false);
+  list5.append ("5"s);
+  list5.append ("10"s);
+  assert (list5.contains ("5"s) == true);
+  assert (list5.contains ("10"s) == true);
+  assert (list5.contains ("15"s) == false);
 
   singly_linked_list list6;
   assert (list6.empty () == true);
-  list6.remove (1); // Should not crash
+  list6.remove ("1"s); // Should not crash
   assert (list6.size () == 0);
 
   singly_linked_list list7;
-  list7.append (1);
-  list7.append (2);
-  list7.append (3);
+  list7.append ("1"s);
+  list7.append ("2"s);
+  list7.append ("3"s);
   list7.display (); // Expected output: 1 2 3
 
   singly_linked_list list8;
-  list8.append (1);
-  list8.append (2);
-  list8.remove (1);
-  list8.remove (2);
+  list8.append ("1"s);
+  list8.append ("2"s);
+  list8.remove ("1"s);
+  list8.remove ("2"s);
   assert (list8.empty () == true);
 
-  singly_linked_list list9;	// leak check
-  list9.append (1);
-  list9.append (2);
-  list9.append (3);
+  singly_linked_list list9; // leak check
+  list9.append ("1"s);
+  list9.append ("2"s);
+  list9.append ("3"s);
 
   singly_linked_list list10;
-  list10.prepend (5);
-  list10.remove (5);
+  list10.prepend ("5"s);
+  list10.remove ("5"s);
 
   assert (list10.empty () == true);
 
