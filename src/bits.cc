@@ -27,20 +27,14 @@ get_bit (i32 n, u32 bitn)
 u32
 clear_msb_bits_through_bit (i32 n, u32 bitn)
 {
-  i32 mask = ~(-1 << bitn);
+  u32 mask = ~(~0u << bitn); // ~0u -> all to ones like -1 but w/o ub
   return n & mask;
-}
-
-u32
-clear_msb_bits_through_bit_second_version (i32 n, u32 bitn)
-{
-  return n & ((1 << bitn) - 1);
 }
 
 u32
 clear_all_bits_through_end (i32 n, u32 bitn)
 {
-  i32 mask = (-1 << (bitn + 1));
+  i32 mask = (~0u << (bitn + 1));
   return n & mask;
 }
 
@@ -61,7 +55,6 @@ main ()
   assert (set_bit (number, 0) == 0b1011);
   assert (get_bit (number, 3) == 1);
   assert (clear_msb_bits_through_bit (number, 1) == 0b0);
-  assert (clear_msb_bits_through_bit_second_version (number, 1) == 0b0);
 
   assert (clear_all_bits_through_end (0b01, 0) == 0b0);
 
