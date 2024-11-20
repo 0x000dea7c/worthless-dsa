@@ -24,3 +24,4 @@ binary_search
 mergesort
 selectionsort
 quicksort
+multithread_array_sum
