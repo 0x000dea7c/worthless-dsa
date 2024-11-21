@@ -5,14 +5,13 @@
 #include <cstdint>
 
 // // SSS (select, swap, step forward)
-template<typename T>
+template <typename T>
 void
-selection_sort (std::vector<T>& data)
+selection_sort (std::vector<T> &data)
 {
   for (size_t i = 0; i < data.size (); ++i)
     {
       size_t j_min = i;
-
       for (size_t j = i + 1; j < data.size (); ++j)
         {
           if (data[j] < data[j_min])
@@ -20,7 +19,6 @@ selection_sort (std::vector<T>& data)
               j_min = j;
             }
         }
-
       if (i != j_min)
         {
           std::swap (data[i], data[j_min]);
@@ -28,9 +26,9 @@ selection_sort (std::vector<T>& data)
     }
 }
 
-template<typename T>
+template <typename T>
 void
-sort (std::vector<T>& data)
+sort (std::vector<T> &data)
 {
   selection_sort (data);
 }
@@ -42,7 +40,7 @@ main ()
 
   {
     // Already sorted, shouldn't do anything.
-    std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
+    std::vector<std::string> data{"alligator"s, "befriend"s, "colour"s};
 
     sort (data);
 
@@ -53,22 +51,9 @@ main ()
 
   {
     // Worst case scenario.
-    std::vector<std::string> data {
-      "zhang"s,
-      "yoshika"s,
-      "xiye"s,
-      "wai"s,
-      "victoria"s,
-      "terry"s,
-      "simon",
-      "rose"s,
-      "qing"s,
-      "petra"s,
-      "oliver"s,
-      "nana"s,
-      "maria"s,
-      "lucas"s,
-      "keiko"s,
+    std::vector<std::string> data{
+      "zhang"s, "yoshika"s, "xiye"s,   "wai"s,  "victoria"s, "terry"s, "simon",  "rose"s,
+      "qing"s,  "petra"s,   "oliver"s, "nana"s, "maria"s,    "lucas"s, "keiko"s,
     };
 
     sort (data);
@@ -92,9 +77,7 @@ main ()
 
   {
     // Even number of elements.
-    std::vector<std::string> data {
-      "here", "we", "go", "even", "number", "of", "elements", "here"
-    };
+    std::vector<std::string> data{"here", "we", "go", "even", "number", "of", "elements", "here"};
 
     sort (data);
 
@@ -110,7 +93,7 @@ main ()
 
   {
     // Odd number of elements.
-    std::vector<std::string> data {
+    std::vector<std::string> data{
       "here", "we", "go", "even", "number", "of", "elements",
     };
 

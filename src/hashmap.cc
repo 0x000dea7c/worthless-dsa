@@ -2,121 +2,74 @@
 #include <cstdlib>
 #include <string>
 #include <list>
-#include <vector>
+#include <array>
 #include <optional>
 #include <cassert>
-#include <cstdint>
 #include <utility>
 #include <algorithm>
+#include <cstdint>
 
 class hashmap final
 {
+  static uint32_t constexpr capacity{10};
+  uint32_t _size;
+  std::array<std::list<std::pair<std::string, std::string>>, capacity> _buckets;
+
+  uint32_t hash_function (std::string const &key) const { return std::hash<std::string> () (key) % capacity; }
+
 public:
-  hashmap ()
-    : _size {0}
+  hashmap () : _size{0} {}
+
+  bool put (std::string const &key, std::string const &value)
   {
-    _data.resize (_buckets);
-  }
-
-  ~hashmap () = default;
-
-  bool
-  put (std::string const& key, std::string const& value)
-  {
-    if (key.empty () || value.empty ())
-      {
-        return false;
-      }
-
-    auto hash_key = hash_function (key);
-    auto& list = _data[hash_key];
-
-    auto it = std::find_if (list.begin (), list.end (), [&key] (std::pair<std::string, std::string> const& arg) {
-      return arg.first == key;
-    });
-
-    if (it != list.end ())
-      {
-        it->second = value;
-      }
-    else
+    assert (!key.empty ());
+    assert (!value.empty ());
+    auto hash = hash_function (key);
+    auto &list = _buckets[hash];
+    auto it = std::find_if (list.begin (), list.end (), [&key] (auto const &arg) { return arg.first == key; });
+    if (it == list.end ())
       {
         list.emplace_back (key, value);
         ++_size;
       }
-
+    else
+      {
+        it->second = value;
+      }
     return true;
   }
 
-  std::optional<std::string>
-  get (std::string const& key) const
+  std::optional<std::string> get (std::string const &key) const
   {
-    if (key.empty ())
+    assert (!key.empty ());
+    auto hash = hash_function (key);
+    auto &list = _buckets[hash];
+    auto it = std::find_if (list.begin (), list.end (), [&key] (auto const &arg) { return arg.first == key; });
+    if (it == list.end ())
       {
         return std::nullopt;
       }
-
-    auto hash_key = hash_function (key);
-    auto& list = _data[hash_key];
-
-    for (auto const& [k, v] : list)
-      {
-        if (k == key)
-          {
-            return v;
-          }
-      }
-
-    return std::nullopt;
+    return it->second;
   }
 
-  bool
-  remove (std::string const& key)
+  bool remove (std::string const &key)
   {
-    if (key.empty ())
+    assert (!key.empty ());
+    auto hash = hash_function (key);
+    auto &list = _buckets[hash];
+    auto it = std::find_if (list.begin (), list.end (), [&key] (auto const &arg) { return arg.first == key; });
+    if (it == list.end ())
       {
         return false;
       }
-
-    auto hash_key = hash_function (key);
-    auto& list = _data[hash_key];
-
-    auto erased = list.remove_if ([&key] (std::pair<std::string, std::string> const& arg) {
-      return key == arg.first;
-    });
-
-    if (erased != 0)
-      {
-        --_size;
-        return true;
-      }
-
-    return false;
+    list.erase (it);
+    --_size;
+    return true;
   }
 
-  size_t
-  size () const
-  {
-    return _size;
-  }
+  uint32_t size () const { return _size; }
 
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
-
-private:
-  static int constexpr _buckets {10};
-
-  size_t
-  hash_function (std::string const& str) const
-  {
-    return std::hash<std::string> () (str) % _buckets;
-  }
-
-  std::vector<std::list<std::pair<std::string, std::string>>> _data;
-  size_t _size;
+  bool empty () const { return size () == 0; }
 };
 
 int
@@ -132,7 +85,7 @@ main ()
     m.put ("deprivation", "self");
 
     assert (m.size () == 5);
-    assert (! m.empty ());
+    assert (!m.empty ());
 
     assert (m.get ("self") == "harm");
     assert (m.get ("loathing") == "self");
@@ -165,7 +118,7 @@ main ()
     hashmap m;
     m.put ("dog", "cat");
 
-    assert (! m.remove ("php"));
+    assert (!m.remove ("php"));
   }
 
   {
@@ -175,15 +128,15 @@ main ()
 
     // You can check for ex6tenz in these two ways, cool!
     assert (m.get ("HAZMAT") == std::nullopt);
-    assert (! m.get ("HAZMAT"));
+    assert (!m.get ("HAZMAT"));
   }
 
   {
     // Empty hash map test.
     hashmap m;
 
-    assert (! m.get ("unforeseen consequences"));
-    assert (! m.remove ("darkness"));
+    assert (!m.get ("unforeseen consequences"));
+    assert (!m.remove ("darkness"));
   }
 
   {
