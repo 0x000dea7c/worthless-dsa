@@ -1,5 +1,6 @@
 CXX      := g++
-CXXFLAGS := -Wall -std=c++17 -ggdb -fsanitize=address,leak,undefined -fanalyzer
+CXXFLAGS := -Wall -std=c++17 -g -O3 -march=native
+# -fsanitize=address,leak,undefined
 SOURCES  := $(wildcard src/*.cc)
 TARGETS  := $(patsubst src/%.cc, %, $(SOURCES))
 
