@@ -12,24 +12,21 @@ merge (std::vector<T> &data, size_t start, size_t mid, size_t end)
 {
   std::vector<T> left_half (mid - start + 1);
   std::vector<T> right_half (end - mid);
-
+  auto const n = left_half.size ();
+  auto const m = right_half.size ();
   size_t i = 0, j = 0, k = start;
-
-  for (; i < left_half.size (); ++i)
+  for (; i < n; ++i)
     {
-      left_half[i] = data[start + i];
+      left_half[i] = data[i + start];
     }
-
-  for (; j < right_half.size (); ++j)
+  for (; j < m; ++j)
     {
-      right_half[j] = data[mid + 1 + j];
+      right_half[j] = data[j + mid + 1];
     }
-
   i = j = 0;
-
-  while (i < left_half.size () && j < right_half.size ())
+  while (i < n && j < m)
     {
-      if (left_half[i] < right_half[j])
+      if (left_half[i] <= right_half[j])
         {
           data[k++] = left_half[i++];
         }
@@ -38,13 +35,11 @@ merge (std::vector<T> &data, size_t start, size_t mid, size_t end)
           data[k++] = right_half[j++];
         }
     }
-
-  while (i < left_half.size ())
+  while (i < n)
     {
       data[k++] = left_half[i++];
     }
-
-  while (j < right_half.size ())
+  while (j < m)
     {
       data[k++] = right_half[j++];
     }

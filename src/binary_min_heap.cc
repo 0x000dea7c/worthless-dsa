@@ -3,115 +3,85 @@
 #include <iostream>
 #include <optional>
 
-class binary_min_heap final
+class binary_min_heap
 {
-public:
-  binary_min_heap (size_t capacity)
-    : _size  {0},
-      _index {0}
+  size_t _index;
+  size_t _size;
+  std::vector<int> _data;
+
+  void percolate_down (size_t hole)
   {
-    if (capacity == 0)
-      {
-        throw std::runtime_error ("Capacity is 0");
-      }
-
-    _data.resize (capacity);
-  }
-
-  ~binary_min_heap () = default;
-
-  void
-  insert (int value)
-  {
-    if (_size + 1 == _data.capacity ())
-      {
-        _data.resize (_data.capacity () * 2);
-      }
-
-    _data[0] = std::move (value);
-
-    size_t hole = ++_index;
-
-    for ( ; _data[0] < _data[hole / 2]; hole /= 2)
-      {
-        _data[hole] = std::move (_data[hole / 2]);
-      }
-
-    _data[hole] = std::move (_data[0]);
-
-    ++_size;
-  }
-
-  void
-  delete_min ()
-  {
-    if (empty ())
-      {
-        return;
-      }
-
-    _data[1] = _data[_index--];
-
-    percolate_down (1);
-
-    --_size;
-  }
-
-  std::optional<int>
-  get_min () const
-  {
-    if (empty ())
-      {
-        return std::nullopt;
-      }
-
-    return _data[1];
-  }
-
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
-
-  size_t
-  size () const
-  {
-    return _size;
-  }
-
-private:
-  void
-  percolate_down (size_t hole)
-  {
-    int hole_value = std::move (_data[hole]);
+    int hole_value = _data[hole];
     size_t child;
-
-    for ( ; hole * 2 <= _index; hole *= 2)
+    for (; hole <= _index; hole *= 2)
       {
         child = hole * 2;
-
-        if (hole < _index && _data[child + 1] < _data[child])
+        if (child <= _index && _data[child + 1] < _data[child])
           {
             ++child;
           }
-
         if (_data[child] < _data[hole])
           {
-            _data[hole] = std::move (_data[child]);
+            _data[hole] = _data[child];
           }
         else
           {
             break;
           }
       }
-
-    _data[hole] = std::move (hole_value);
+    _data[hole] = hole_value;
   }
 
-  std::vector<int> _data;
-  size_t _size;
-  size_t _index;
+public:
+  binary_min_heap (size_t capacity) : _index{0}, _size{0}
+  {
+    assert (capacity > 0);
+    _data.resize (capacity + 1);
+  }
+
+  ~binary_min_heap () = default;
+
+  void insert (int value)
+  {
+    auto const cap = _data.capacity ();
+    if (_size + 1 == cap)
+      {
+        _data.resize (cap * 2);
+      }
+    _data[0] = value;
+    size_t hole = ++_index;
+    for (; _data[0] < _data[hole / 2]; hole /= 2)
+      {
+        _data[hole] = _data[hole / 2];
+      }
+    _data[hole] = _data[0];
+    ++_size;
+  }
+
+  std::optional<int> get_min () const
+  {
+    if (empty ())
+      {
+        return std::nullopt;
+      }
+    return _data[1];
+  }
+
+  bool delete_min ()
+  {
+    if (empty ())
+      {
+        return false;
+      }
+    _data[1] = _data[_index--];
+    percolate_down (1);
+    --_size;
+    return true;
+  }
+
+  bool empty () const { return size () == 0; }
+
+  size_t size () const { return _size; }
 };
 
 int
@@ -147,19 +117,7 @@ main ()
   }
 
   {
-    // Test 3: empty and exception is thrown
-    try
-      {
-	binary_min_heap heap (0);
-	assert (false && "can't get here cuz exception will be thrown");
-      }
-    catch (std::runtime_error const&)
-      {
-      }
-  }
-
-  {
-    // Test 4: Large number of insertions, test resize
+    // Test 3: Large number of insertions, test resize
     binary_min_heap heap (10);
 
     for (int i = 1000; i > 0; --i)
@@ -169,7 +127,7 @@ main ()
   }
 
   {
-    // Test 5: Duplicate elements (supported)
+    // Test 4: Duplicate elements (supported)
     binary_min_heap heap (10);
     heap.insert (5);
     heap.insert (3);
@@ -185,7 +143,7 @@ main ()
   }
 
   {
-    // Test 6: Single element
+    // Test 5: Single element
     binary_min_heap heap (10);
     heap.insert (42);
 

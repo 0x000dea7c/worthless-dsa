@@ -4,14 +4,13 @@
 #include <vector>
 #include <cassert>
 
-template<typename T>
-uint32_t
-partition (std::vector<T>& data, int32_t start, int32_t end)
+template <typename T>
+int
+partition (std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
   auto smaller_index = start - 1;
-
-  for (int32_t i = start; i <= end - 1; ++i)
+  for (int i = start; i <= end - 1; ++i)
     {
       if (data[i] <= pivot)
         {
@@ -19,34 +18,30 @@ partition (std::vector<T>& data, int32_t start, int32_t end)
           std::swap (data[i], data[smaller_index]);
         }
     }
-
-  std::swap (data[smaller_index + 1], data[end]); // place pivot in the right position
-
+  std::swap (data[smaller_index + 1], data[end]);
   return smaller_index + 1;
 }
 
-// Partition, Recursion (PR)!
-template<typename T>
+template <typename T>
 void
-quicksort (std::vector<T>&data, int32_t start, int32_t end)
+quicksort (std::vector<T> &data, int start, int end)
 {
   if (start < end)
     {
-      auto partition_index = partition (data, start, end);
-      quicksort (data, start, partition_index - 1);
-      quicksort (data, partition_index + 1, end);
+      int part = partition (data, start, end);
+      quicksort (data, start, part - 1);
+      quicksort (data, part + 1, end);
     }
 }
 
-template<typename T>
+template <typename T>
 void
-sort (std::vector<T>& data)
+sort (std::vector<T> &data)
 {
   if (data.empty () || data.size () == 1)
     {
       return;
     }
-
   quicksort (data, 0, data.size () - 1);
 }
 
@@ -57,7 +52,7 @@ main ()
 
   {
     // Already sorted, shouldn't do anything.
-    std::vector<std::string> data {"alligator"s, "befriend"s, "colour"s};
+    std::vector<std::string> data{"alligator"s, "befriend"s, "colour"s};
 
     sort (data);
 
@@ -68,22 +63,9 @@ main ()
 
   {
     // Worst case scenario.
-    std::vector<std::string> data {
-      "zhang"s,
-      "yoshika"s,
-      "xiye"s,
-      "wai"s,
-      "victoria"s,
-      "terry"s,
-      "simon",
-      "rose"s,
-      "qing"s,
-      "petra"s,
-      "oliver"s,
-      "nana"s,
-      "maria"s,
-      "lucas"s,
-      "keiko"s,
+    std::vector<std::string> data{
+      "zhang"s, "yoshika"s, "xiye"s,   "wai"s,  "victoria"s, "terry"s, "simon",  "rose"s,
+      "qing"s,  "petra"s,   "oliver"s, "nana"s, "maria"s,    "lucas"s, "keiko"s,
     };
 
     sort (data);
@@ -107,9 +89,7 @@ main ()
 
   {
     // Even number of elements.
-    std::vector<std::string> data {
-      "here", "we", "go", "even", "number", "of", "elements", "here"
-    };
+    std::vector<std::string> data{"here", "we", "go", "even", "number", "of", "elements", "here"};
 
     sort (data);
 
@@ -125,7 +105,7 @@ main ()
 
   {
     // Odd number of elements.
-    std::vector<std::string> data {
+    std::vector<std::string> data{
       "here", "we", "go", "even", "number", "of", "elements",
     };
 
