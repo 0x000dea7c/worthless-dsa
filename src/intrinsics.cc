@@ -61,13 +61,13 @@ sum (T *data, size_t n)
   assert (total_sum == expected);
 }
 
-template <typename T>
+template <typename T> // yo the sizeof is important don't forget u rat
 typename std::enable_if<std::is_floating_point<T>::value && sizeof (T) == 8, void>::type
 sum (T *data, size_t n)
 {
   __m256d sum_vector = _mm256_setzero_pd ();
   auto now = std::chrono::high_resolution_clock::now ();
-  // process in chunks of 4 doubles (4 * 8 * 8 = 256 bits)
+  // process in chunks of 4 doubles (8 * 4 * 8 = 256 bits)
   size_t i = 0;
   for (; i + 4 <= n; i += 4)
     {
