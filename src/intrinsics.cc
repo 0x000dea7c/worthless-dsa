@@ -11,7 +11,6 @@ static uint64_t constexpr expected{5'000'050'000};
 int
 main ()
 {
-  // sum 1M ones in a row using avx2
   std::vector<uint64_t> data (100'000 + 1);
   auto const n = data.size ();
   for (size_t i = 0; i < n; ++i)
@@ -25,7 +24,6 @@ main ()
   // process in chunks of 4 uint64_t (8 * 4 * 8 -> 256 bits)
   for (; i + 4 <= data.size (); i += 4)
     {
-      // this mf grabs 8 ints
       __m256i data_vector = _mm256_loadu_si256 (reinterpret_cast<__m256i const *> (&data[i]));
       sum_vector = _mm256_add_epi64 (sum_vector, data_vector);
     }
