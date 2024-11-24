@@ -9,7 +9,7 @@ int
 partition (std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
-  auto smaller_index = start - 1;
+  int smaller_index = start - 1;
   for (int i = start; i <= end - 1; ++i)
     {
       if (data[i] <= pivot)
@@ -18,7 +18,7 @@ partition (std::vector<T> &data, int start, int end)
           std::swap (data[i], data[smaller_index]);
         }
     }
-  std::swap (data[smaller_index + 1], data[end]);
+  std::swap (data[end], data[smaller_index + 1]);
   return smaller_index + 1;
 }
 

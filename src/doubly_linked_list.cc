@@ -3,111 +3,114 @@
 #include <iostream>
 #include <string>
 
-class doubly_linked_list final
+class doubly_linked_list
 {
+  struct node
+  {
+    node (node *prev, node *next, std::string const &val) : _prev{prev}, _next{next}, _val{val} {}
+    node *_prev;
+    node *_next;
+    std::string _val;
+  };
+
+  node *_head;
+  node *_tail;
+  size_t _size;
+
 public:
   doubly_linked_list () : _head{nullptr}, _tail{nullptr}, _size{0} {}
 
   ~doubly_linked_list ()
   {
-    auto *node{_head};
-
-    while (node)
+    node *curr{_head};
+    while (curr)
       {
-        auto *next = node->_next;
-        delete node;
-        node = next;
+        auto *n = curr->_next;
+        delete curr;
+        curr = n;
       }
   }
 
   void append (std::string const &value)
   {
-    if (value.empty ())
+    assert (!value.empty ());
+    if (!_head)
       {
-        return;
-      }
-
-    if (empty ())
-      {
-        _head = _tail = new node (_tail, nullptr, value);
-      }
-    else
-      {
-        _tail->_next = new node (_tail, nullptr, value);
-        _tail = _tail->_next;
-      }
-
-    ++_size;
-  }
-
-  void prepend (std::string const &value)
-  {
-    if (value.empty ())
-      {
-        return;
-      }
-
-    if (empty ())
-      {
-        _head = _tail = new node (nullptr, _head, value);
+        _head = _tail = new node (nullptr, nullptr, value);
       }
     else
       {
         _head->_prev = new node (nullptr, _head, value);
         _head = _head->_prev;
       }
-
     ++_size;
   }
 
-  void remove (std::string const &value)
+  void prepend (std::string const &value)
   {
-    if (value.empty () || empty ())
+    assert (!value.empty ());
+    if (!_tail)
       {
-        return;
-      }
-
-    if (_head->_value == value)
-      {
-        auto *tmp = _head->_next;
-        delete _head;
-        _head = tmp;
-        if (tmp)
-          {
-            _head->_prev = nullptr;
-          }
-      }
-    else if (_tail->_value == value)
-      {
-        auto *tmp = _tail->_prev;
-        delete _tail;
-        _tail = tmp;
-        if (tmp)
-          {
-            tmp->_next = nullptr;
-          }
+        _head = _tail = new node (nullptr, nullptr, value);
       }
     else
       {
-        auto *node = _head->_next;
-
-        while (node && node->_value != value)
-          {
-            node = node->_next;
-          }
-
-        if (!node)
-          {
-            return;
-          }
-
-        node->_prev->_next = node->_next;
-        node->_next->_prev = node->_prev;
-        delete node;
+        _tail->_next = new node (_tail, nullptr, value);
+        _tail = _tail->_next;
       }
-
-    --_size;
+    ++_size;
   }
+
+  bool remove (std::string const &value)
+  {
+    assert (!value.empty ());
+    if (empty ())
+      {
+        return false;
+      }
+    if (_head->_val == value)
+      {
+        auto *n = _head->_next;
+        delete _head;
+        if (n)
+          {
+            n->_prev = nullptr;
+          }
+        _head = n;
+        --_size;
+        return true;
+      }
+    else if (_tail->_val == value)
+      {
+        auto *n = _tail->_prev;
+        delete _tail;
+        if (n)
+          {
+            n->_next = nullptr;
+          }
+        _tail = n;
+        --_size;
+        return true;
+      }
+    auto *curr = _head->_next;
+    while (curr && curr->_val != value)
+      {
+        curr = curr->_next;
+      }
+    if (!curr)
+      {
+        return false;
+      }
+    curr->_prev->_next = curr->_next;
+    curr->_next->_prev = curr->_prev;
+    delete curr;
+    --_size;
+    return true;
+  }
+
+  bool empty () const { return size () == 0; }
+
+  size_t size () const { return _size; }
 
   bool contains (std::string const &value) const
   {
@@ -115,61 +118,13 @@ public:
       {
         return false;
       }
-
-    if (_head->_value == value)
+    auto *curr = _head;
+    while (curr && curr->_val != value)
       {
-        return true;
+        curr = curr->_next;
       }
-    else if (_tail->_value == value)
-      {
-        return true;
-      }
-
-    auto *node = _head->_next;
-
-    while (node)
-      {
-        if (node->_value == value)
-          {
-            return true;
-          }
-
-        node = node->_next;
-      }
-
-    return false;
+    return (curr) ? true : false;
   }
-
-  void display () const
-  {
-    auto *node = _head;
-
-    while (node)
-      {
-        std::cout << node->_value << ' ';
-        node = node->_next;
-      }
-
-    std::cout << '\n';
-  }
-
-  size_t size () const { return _size; }
-
-  bool empty () const { return size () == 0; }
-
-private:
-  struct node final
-  {
-    node (node *prev, node *next, std::string value) : _prev{prev}, _next{next}, _value{value} {}
-
-    node *_prev;
-    node *_next;
-    std::string _value;
-  };
-
-  node *_head;
-  node *_tail;
-  size_t _size;
 };
 
 int
@@ -219,8 +174,6 @@ main ()
   list.append ("2"s);
   list.append ("3"s);
   list.append ("4"s); // ensure destructor releases resources
-
-  list.display ();
 
   std::cout << "All tests passed!\n";
 

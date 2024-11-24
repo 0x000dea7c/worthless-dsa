@@ -9,10 +9,11 @@ template <typename T>
 void
 selection_sort (std::vector<T> &data)
 {
-  for (size_t i = 0; i < data.size (); ++i)
+  auto const n = data.size ();
+  for (size_t i = 0; i < n; ++i)
     {
       size_t j_min = i;
-      for (size_t j = i + 1; j < data.size (); ++j)
+      for (size_t j = i + 1; j < n; ++j)
         {
           if (data[j] < data[j_min])
             {
