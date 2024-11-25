@@ -9,8 +9,8 @@ int
 partition (std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
-  int smaller_index = start - 1;
-  for (int i = start; i <= end - 1; ++i)
+  auto smaller_index = start - 1;
+  for (auto i = start; i <= end - 1; ++i)
     {
       if (data[i] <= pivot)
         {
@@ -18,8 +18,9 @@ partition (std::vector<T> &data, int start, int end)
           std::swap (data[i], data[smaller_index]);
         }
     }
-  std::swap (data[end], data[smaller_index + 1]);
-  return smaller_index + 1;
+  ++smaller_index;
+  std::swap (data[end], data[smaller_index]);
+  return smaller_index;
 }
 
 template <typename T>
@@ -28,7 +29,7 @@ quicksort (std::vector<T> &data, int start, int end)
 {
   if (start < end)
     {
-      int part = partition (data, start, end);
+      auto part = partition (data, start, end);
       quicksort (data, start, part - 1);
       quicksort (data, part + 1, end);
     }
