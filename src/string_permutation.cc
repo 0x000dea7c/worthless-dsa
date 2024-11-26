@@ -4,20 +4,20 @@
 #include <vector>
 #include <algorithm>
 
-void
-permute (std::string &word, size_t start, size_t end, std::vector<std::string> &results)
+static void
+permute (std::string &str, int start, int end, std::vector<std::string> &results)
 {
   if (start == end)
     {
-      results.push_back (word);
+      results.push_back (str);
     }
   else
     {
-      for (size_t i = start; i <= end; ++i)
+      for (int i = start; i <= end; ++i)
         {
-          std::swap (word[i], word[start]);
-          permute (word, start + 1, end, results);
-          std::swap (word[i], word[start]);
+          std::swap (str[i], str[start]);
+          permute (str, start + 1, end, results);
+          std::swap (str[i], str[start]);
         }
     }
 }
@@ -34,12 +34,12 @@ main ()
 
   std::sort (permutations.begin (), permutations.end ());
 
-  assert (permutations[0] == "dgo");
-  assert (permutations[1] == "dog");
-  assert (permutations[2] == "gdo");
-  assert (permutations[3] == "god");
-  assert (permutations[4] == "odg");
-  assert (permutations[5] == "ogd");
+  assert (permutations[0] == "dgo"s);
+  assert (permutations[1] == "dog"s);
+  assert (permutations[2] == "gdo"s);
+  assert (permutations[3] == "god"s);
+  assert (permutations[4] == "odg"s);
+  assert (permutations[5] == "ogd"s);
 
   std::cout << "All tests passed!\n";
 

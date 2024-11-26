@@ -10,7 +10,7 @@ partition (std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
   auto smaller_index = start - 1;
-  for (auto i = start; i <= end - 1; ++i)
+  for (int i = start; i <= end - 1; ++i)
     {
       if (data[i] <= pivot)
         {
@@ -29,7 +29,7 @@ quicksort (std::vector<T> &data, int start, int end)
 {
   if (start < end)
     {
-      auto part = partition (data, start, end);
+      int part = partition (data, start, end);
       quicksort (data, start, part - 1);
       quicksort (data, part + 1, end);
     }
@@ -43,7 +43,7 @@ sort (std::vector<T> &data)
     {
       return;
     }
-  quicksort (data, 0, data.size () - 1);
+  quicksort (data, 0, static_cast<int> (data.size () - 1));
 }
 
 int
