@@ -10,12 +10,12 @@ partition (std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
   auto smaller_index = start - 1;
-  for (int i = start; i <= end - 1; ++i)
+  for (auto i = start; i <= end - 1; ++i)
     {
       if (data[i] <= pivot)
         {
           ++smaller_index;
-          std::swap (data[i], data[smaller_index]);
+          std::swap (data[smaller_index], data[i]);
         }
     }
   ++smaller_index;
