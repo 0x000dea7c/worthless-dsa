@@ -3,25 +3,24 @@
 #include <iostream>
 
 // Meyers' singleton (since c++11 initialisation is thread safe)
-class audio_manager final
+class audio_manager
 {
+  audio_manager () = default;
+
 public:
   audio_manager (audio_manager &) = delete;
   audio_manager (audio_manager &&) = delete;
 
-  audio_manager &operator= (audio_manager &) = delete;
-  audio_manager &operator= (audio_manager &&) = delete;
+  bool operator= (audio_manager const &) = delete;
+  bool operator= (audio_manager &&) = delete;
+
+  bool operator== (audio_manager const &other) const { return this == &other; }
 
   static audio_manager &get_instance ()
   {
     static audio_manager instance;
     return instance;
   }
-
-  bool operator== (audio_manager &other) const { return this == &other; }
-
-private:
-  audio_manager () = default;
 };
 
 int

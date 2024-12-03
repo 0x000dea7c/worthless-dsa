@@ -15,7 +15,7 @@ partition (std::vector<T> &data, int start, int end)
       if (data[i] <= pivot)
         {
           ++smaller_index;
-          std::swap (data[smaller_index], data[i]);
+          std::swap (data[i], data[smaller_index]);
         }
     }
   ++smaller_index;

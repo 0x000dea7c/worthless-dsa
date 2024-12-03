@@ -9,10 +9,9 @@ void
 bubblesort (std::vector<T> &data)
 {
   auto const n = data.size ();
-  bool swapped{false};
   for (size_t i = 0; i < n; ++i)
     {
-      swapped = false;
+      bool swapped = false;
       for (size_t j = 0; j < n - i - 1; ++j)
         {
           if (data[j] > data[j + 1])

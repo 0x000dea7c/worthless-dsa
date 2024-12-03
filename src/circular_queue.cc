@@ -1,16 +1,17 @@
 #include <cassert>
 #include <iostream>
+#include <optional>
 #include <vector>
 
-// NOTE: Circular queue that wraps around. Follows FIFO principle and thus you can
-// only enqueue (adding at the end) and dequeue (removing from the front).
-class circular_queue final
+class circular_queue
 {
+  size_t _front;
+  size_t _back;
+  size_t _size;
+  std::vector<std::string> _data;
+
 public:
-  circular_queue (size_t capacity)
-    : _front {0},
-      _back  {0},
-      _size  {0}
+  circular_queue (size_t capacity) : _front{0}, _back{0}, _size{0}
   {
     assert (capacity > 0);
     _data.resize (capacity);
@@ -18,90 +19,46 @@ public:
 
   ~circular_queue () = default;
 
-  bool
-  enqueue (std::string const& value)
+  bool enqueue (std::string const &value)
   {
-    if (value.empty ())
-      {
-        return false;
-      }
-
-    if (_size == capacity ())
-      {
-        return false;
-      }
-
+    assert (!value.empty ());
+    if (_size == _data.capacity ())
+      return false;
     _data[_back] = value;
-
-    _back = (_back + 1) % capacity ();
-
+    _back = (_back + 1) % _data.capacity ();
     ++_size;
-
     return true;
   }
 
-  bool
-  dequeue ()
+  bool dequeue ()
   {
     if (empty ())
-      {
-        return false;
-      }
-
+      return false;
     _data[_front].clear ();
-
-    _front = (_front + 1) % capacity ();
-
+    _front = (_front + 1) % _data.capacity ();
     --_size;
-
     return true;
   }
 
-  std::optional<std::string>
-  front () const
+  std::optional<std::string> front () const
   {
     if (empty ())
-      {
-        return std::nullopt;
-      }
-
+      return std::nullopt;
     return _data[_front];
   }
 
-  std::optional<std::string>
-  rear () const
+  std::optional<std::string> rear () const
   {
     if (empty ())
-      {
-        return std::nullopt;
-      }
-
-    return _back == 0 ? _data.back () : _data[_back - 1];
+      return std::nullopt;
+    return _data[(_back == 0) ? _data.capacity () - 1 : _back - 1];
   }
 
-  size_t
-  capacity () const
-  {
-    return _data.capacity ();
-  }
+  size_t capacity () const { return _data.capacity (); }
 
-  size_t
-  size () const
-  {
-    return _size;
-  }
+  bool empty () const { return size () == 0; }
 
-  bool
-  empty () const
-  {
-    return size () == 0;
-  }
-
-private:
-  std::vector<std::string> _data;
-  size_t _front;
-  size_t _back;
-  size_t _size;
+  size_t size () const { return _size; }
 };
 
 int
@@ -121,7 +78,7 @@ main ()
 
     assert (q.front () == "cause"s);
     assert (q.rear () == "mind"s);
-    assert (! q.empty ());
+    assert (!q.empty ());
     assert (q.size () == 5);
   }
 
@@ -142,7 +99,7 @@ main ()
     assert (q.dequeue ());
 
     // No more elements, should return false.
-    assert (! q.dequeue ());
+    assert (!q.dequeue ());
     assert (q.empty ());
     assert (q.size () == 0);
   }
@@ -166,7 +123,7 @@ main ()
     assert (q.enqueue ("new emotions"s));
     assert (q.enqueue ("new relationships"s));
 
-    assert (! q.empty ());
+    assert (!q.empty ());
     assert (q.size () == 4);
     assert (q.front () == "new beginning"s);
     assert (q.rear () == "new relationships"s);
@@ -180,7 +137,7 @@ main ()
     assert (q.enqueue ("cat"s));
     assert (q.enqueue ("bird"s));
 
-    assert (! q.enqueue ("crocodile"s));
+    assert (!q.enqueue ("crocodile"s));
   }
 
   {
@@ -227,9 +184,9 @@ main ()
     // Lots of elements test.
     circular_queue q (10'000);
 
-    for (uint32_t i = 0; i < q.capacity (); ++i)
+    for (size_t i = 0; i < q.capacity (); ++i)
       {
-        std::string base {"a" + std::to_string (i)};
+        std::string base{"a" + std::to_string (i)};
         assert (q.enqueue (base));
       }
 

@@ -10,18 +10,17 @@ template <typename T>
 void
 merge (std::vector<T> &data, size_t start, size_t mid, size_t end)
 {
-  std::vector<T> left_half (mid - start + 1);
-  std::vector<T> right_half (end - mid);
-  auto const n = left_half.size ();
-  auto const m = right_half.size ();
+  auto const n = mid - start + 1;
+  auto const m = end - mid;
+  std::vector<T> left_half (n), right_half (m);
   size_t i = 0, j = 0, k = start;
   for (; i < n; ++i)
     {
-      left_half[i] = data[i + start];
+      left_half[i] = data[start + i];
     }
   for (; j < m; ++j)
     {
-      right_half[j] = data[j + mid + 1];
+      right_half[j] = data[mid + j + 1];
     }
   i = j = 0;
   while (i < n && j < m)
@@ -51,7 +50,7 @@ mergesort (std::vector<T> &data, size_t start, size_t end)
 {
   if (start < end)
     {
-      size_t mid = start + ((end - start) / 2);
+      auto mid = start + ((end - start) / 2);
       mergesort (data, start, mid);
       mergesort (data, mid + 1, end);
       merge (data, start, mid, end);
