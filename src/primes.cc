@@ -6,38 +6,34 @@
 #include <cmath>
 #include <algorithm>
 
-void
-cross_off (uint32_t prime, std::vector<bool> &primes)
+static size_t
+get_next_prime (size_t prime, std::vector<bool> &crossed)
 {
-  for (uint32_t i = prime * prime; i < primes.size (); i += prime)
-    {
-      primes[i] = false;
-    }
-}
-
-uint32_t
-get_next_prime (uint32_t prime, std::vector<bool> &primes)
-{
-  ++prime;
-  while (prime < primes.size () && !primes[prime])
-    {
-      ++prime;
-    }
+  prime = prime + 1;
+  while (prime < crossed.size () && !crossed[prime])
+    ++prime;
   return prime;
 }
 
-std::vector<bool>
-sieve_of_eratosthenes (uint32_t max)
+static void
+cross_off (size_t prime, std::vector<bool> &crossed)
 {
-  std::vector<bool> primes (max + 1, true);
-  primes[0] = primes[1] = primes[2] = false;
-  uint32_t prime = 2;
-  while (prime <= sqrt (max))
+  for (auto i = prime * prime; i < crossed.size (); i += prime)
+    crossed[i] = false;
+}
+
+std::vector<bool>
+sieve_of_eratosthenes (size_t max)
+{
+  std::vector<bool> crossed (max + 1, true);
+  crossed[0] = crossed[1] = false;
+  size_t i = 2;
+  while (i < std::sqrt (max))
     {
-      cross_off (prime, primes);
-      prime = get_next_prime (prime, primes);
+      cross_off (i, crossed);
+      i = get_next_prime (i, crossed);
     }
-  return primes;
+  return crossed;
 }
 
 int
