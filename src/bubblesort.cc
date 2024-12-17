@@ -21,9 +21,7 @@ bubblesort (std::vector<T> &data)
             }
         }
       if (!swapped)
-        {
-          break;
-        }
+        break;
     }
 }
 

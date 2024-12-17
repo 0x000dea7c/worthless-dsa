@@ -4,25 +4,25 @@
 #include <vector>
 #include <cassert>
 
-template <typename T>
-int partition (std::vector<T> &data, int start, int end) {
+template<typename T>
+int partition(std::vector<T> &data, int start, int end) {
   auto pivot = data[end];
-  auto smaller_index = start - 1;
-  for (auto i = start; i <= end - 1; ++i) {
-    if (data[i] <= pivot) {
-      ++smaller_index;
-      std::swap(data[i], data[smaller_index]);
+  auto smaller_idx = start - 1;
+  for (auto i = start; i < end; ++i) {
+    if (data[i] < pivot) {
+      ++smaller_idx;
+      std::swap(data[i], data[smaller_idx]);
     }
   }
-  ++smaller_index;
-  std::swap(data[smaller_index], data[end]);
-  return smaller_index;
+  ++smaller_idx;
+  std::swap(data[end], data[smaller_idx]);
+  return smaller_idx;
 }
 
-template <typename T>
+template<typename T>
 void quicksort(std::vector<T> &data, int start, int end) {
   if (start < end) {
-    int part = partition(data, start, end);
+    auto part = partition(data, start, end);
     quicksort(data, start, part - 1);
     quicksort(data, part + 1, end);
   }

@@ -4,26 +4,26 @@
 #include <string>
 #include <cstdint>
 
-// SSS (select, swap, step forward)
-template<typename T>
-void selection_sort(std::vector<T> &data) {
-  auto const n = data.size();
-  for (size_t i = 0; i < n; ++i) {
-    auto j_min = i;
-    for (size_t j = i + 1; j < n; ++j) {
-      if (data[j] < data[j_min]) {
-        j_min = j;
-      }
+template <typename T>
+void
+selection_sort (std::vector<T> &data)
+{
+  auto const n = data.size ();
+  for (size_t i = 0; i < n; ++i)
+    {
+      size_t j_min = i;
+      for (size_t j = i + 1; j < n; ++j)
+        if (data[j] < data[j_min])
+          j_min = j;
+      if (j_min != i)
+        std::swap (data[i], data[j_min]);
     }
-    if (j_min != i) {
-      std::swap(data[j_min], data[i]);
-    }
-  }
 }
 
-template<typename T>
+template <typename T>
 void
-sort (std::vector<T> &data) {
+sort (std::vector<T> &data)
+{
   selection_sort (data);
 }
 
