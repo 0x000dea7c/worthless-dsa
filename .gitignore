@@ -31,3 +31,4 @@ task_based_concurrency
 intrinsics
 dec_to_bin
 dec_to_hex
+arena
