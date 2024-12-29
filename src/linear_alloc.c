@@ -111,17 +111,17 @@ int main(void) {
 	a.prev_offset = 0;
 	a.buf_len = 42;
 	
-	a.buf = malloc(a.buf_len);
+	a.buf = (u_char *) malloc(a.buf_len);
         if (a.buf == NULL) {
 		fprintf(stderr, "Couldn't allocate memory\n");
 		return 1;
 	}
 
-        char* name0 = arena_alloc(&a, 6);
+        char* name0 = (char *) arena_alloc(&a, 6);
 	assert(name0);
-	char* name1 = arena_alloc(&a, 5);
+	char* name1 = (char *) arena_alloc(&a, 5);
 	assert(name1);
-	char* name2 = arena_alloc(&a, 4);
+	char* name2 = (char *) arena_alloc(&a, 4);
 	assert(name2);
 	/* This part fails because it runs out of memory, cool! */
         /* char* name3 = arena_alloc(&a, 4); */
@@ -138,11 +138,32 @@ int main(void) {
         /* printf("name is: %s\n", name3); */
 
 	/* I don't know how this is very useful (yet) */
-	char *name3 = arena_resize(&a, name2, 4, 7);
+	char *name3 = (char *) arena_resize(&a, name2, 4, 7);
 	assert(name3);
 
 	memcpy(name3, "Eileen", sizeof("Eileen"));
 	printf("after resizing name is %s\n", name3);
+
+	/* Let's try creating a whole different example */
+	arena_free(&a);
+
+	/* This is kind of stupid, but it's alright */
+	a.buf_len = 1024;
+	a.buf = (u_char *) realloc(a.buf, a.buf_len);
+	assert(a.buf != NULL);
+	arena_init(&a, a.buf, a.buf_len);
+
+	int *nums = (int *) arena_alloc(&a, 5 * sizeof(int));
+	for (int i = 0; i < 5; ++i)
+		nums[i] = i + 1;
+
+	/* Now I realloc */
+	int *new_nums = (int *) arena_resize(&a, nums, 5 * sizeof(int), 10 * sizeof(int));
+	for (int i = 0; i < 5; ++i)
+		new_nums[i + 5] = i + 5 + 1;
+
+	for (int i = 0; i < 10; ++i)
+		printf("%d\n", nums[i]);
 	
 	free(a.buf);
 	return 0;
