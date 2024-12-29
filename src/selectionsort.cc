@@ -13,10 +13,16 @@ selection_sort (std::vector<T> &data)
     {
       size_t j_min = i;
       for (size_t j = i + 1; j < n; ++j)
-        if (data[j] < data[j_min])
-          j_min = j;
+        {
+          if (data[j] < data[j_min])
+            {
+              j_min = j;
+            }
+        }
       if (j_min != i)
-        std::swap (data[i], data[j_min]);
+        {
+          std::swap (data[i], data[j_min]);
+        }
     }
 }
 

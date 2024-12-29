@@ -12,7 +12,7 @@ bubblesort (std::vector<T> &data)
   for (size_t i = 0; i < n; ++i)
     {
       bool swapped = false;
-      for (size_t j = 0; j < n - i - 1; ++j)
+      for (size_t j = 0; j < n - 1 - i; ++j)
         {
           if (data[j] > data[j + 1])
             {
@@ -21,7 +21,9 @@ bubblesort (std::vector<T> &data)
             }
         }
       if (!swapped)
-        break;
+        {
+          break;
+        }
     }
 }
 
