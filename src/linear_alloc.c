@@ -42,7 +42,7 @@ static void *arena_alloc_align(arena *a, size_t size, size_t align) {
 		fprintf(stderr, "No mem available in arena!\n");
 		return NULL;
 	}
-	
+
 	void *ptr = &a->buf[offset];
 	a->prev_offset = offset;
 	a->curr_offset = offset + size;
@@ -110,7 +110,7 @@ int main(void) {
 	a.curr_offset = 0;
 	a.prev_offset = 0;
 	a.buf_len = 42;
-	
+
 	a.buf = (unsigned char *) malloc(a.buf_len);
         if (a.buf == NULL) {
 		fprintf(stderr, "Couldn't allocate memory\n");
@@ -164,7 +164,7 @@ int main(void) {
 
 	for (int i = 0; i < 10; ++i)
 		printf("%d\n", nums[i]);
-	
+
 	free(a.buf);
 	return 0;
 }
