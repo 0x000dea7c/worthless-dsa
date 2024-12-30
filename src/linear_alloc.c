@@ -12,7 +12,7 @@
 typedef struct arena arena;
 
 struct arena {
-	u_char *buf;
+	unsigned char *buf;
 	size_t buf_len;
 	size_t prev_offset;
 	size_t curr_offset;
@@ -25,7 +25,7 @@ static bool ispowof2(uintptr_t x) {
 static uintptr_t align_forward(uintptr_t ptr, size_t align) {
 	assert(ispowof2(align) && "this ain't a power of 2");
 	uintptr_t p = ptr, a = align;
-	uintptr_t mod = p & (a - 1);
+	uintptr_t mod = p & (a - 1); /* p % a, but faster */
 	if (mod != 0) {
 		p += a - mod;
 	}
@@ -50,7 +50,7 @@ static void *arena_alloc_align(arena *a, size_t size, size_t align) {
 	return ptr;
 }
 
-void arena_init(arena *a, u_char *buf, size_t buf_len) {
+void arena_init(arena *a, unsigned char *buf, size_t buf_len) {
 	a->buf = buf;
 	a->buf_len = buf_len;
 	a->curr_offset = a->prev_offset = 0;
@@ -66,7 +66,7 @@ void arena_free(arena* a) {
 
 static void *arena_resize_align(arena *a, void *old_m, size_t old_size, size_t new_size, size_t align) {
 	assert(ispowof2(align));
-	u_char *old_mem = (u_char *)old_m;
+	unsigned char *old_mem = (unsigned char *)old_m;
 
 	if (old_m == NULL || old_size == 0) {
 		return arena_alloc(a, new_size);
@@ -111,7 +111,7 @@ int main(void) {
 	a.prev_offset = 0;
 	a.buf_len = 42;
 	
-	a.buf = (u_char *) malloc(a.buf_len);
+	a.buf = (unsigned char *) malloc(a.buf_len);
         if (a.buf == NULL) {
 		fprintf(stderr, "Couldn't allocate memory\n");
 		return 1;
@@ -149,7 +149,7 @@ int main(void) {
 
 	/* This is kind of stupid, but it's alright */
 	a.buf_len = 1024;
-	a.buf = (u_char *) realloc(a.buf, a.buf_len);
+	a.buf = (unsigned char *) realloc(a.buf, a.buf_len);
 	assert(a.buf != NULL);
 	arena_init(&a, a.buf, a.buf_len);
 

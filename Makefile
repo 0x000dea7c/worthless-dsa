@@ -2,9 +2,9 @@ ASM      := nasm
 ASMFLAGS := -f elf64 -g
 LD       := ld
 CXX      := g++
-CXXFLAGS := -Wall -std=c++17 -g -O3 -march=native -mavx2  -ftrapv -Wstrict-overflow -fsanitize=address,leak,undefined
-CC       := cc
-CFLAGS := -Wall -std=c99 -g -O3 -march=native -mavx2  -ftrapv -Wstrict-overflow -fsanitize=address,leak,undefined
+CXXFLAGS := -Wall -std=c++17 -g -O3 -march=native -mavx2 -ftrapv -Wstrict-overflow -fsanitize=address,leak,undefined
+CC       := gcc
+CFLAGS   := -Wall -std=c99 -g -O3 -march=native -mavx2 -ftrapv -Wstrict-overflow -fsanitize=address,leak,undefined
 
 #
 # ftrapv: makes program abort if integer overflow happenz, but honestly the sanitiser should do it
@@ -29,7 +29,7 @@ all: $(TARGETS) $(ASM_TARGETS)
 	rm $@.o
 
 %: src/%.c
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 .PHONY: all clean
 
