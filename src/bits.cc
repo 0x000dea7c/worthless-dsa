@@ -25,7 +25,7 @@ get_bit (i32 n, u32 bitn)
 }
 
 u32
-clear_msb_bits_through_bit (i32 n, u32 bitn)
+clear_msb_bits_through_bit(i32 n, u32 bitn)
 {
   i32 mask = ~(~0u << bitn);
   return n & mask;
