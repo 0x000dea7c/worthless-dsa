@@ -36,6 +36,7 @@ sieve_of_eratosthenes (size_t max)
   return crossed;
 }
 
+
 int
 main ()
 {

@@ -4,28 +4,35 @@
 #include <vector>
 #include <cassert>
 
-template<typename T>
-int partition(std::vector<T> &data, int start, int end) {
+// PARTITION, RECURSE!
+template <typename T>
+static int
+partition(std::vector<T> &data, int start, int end)
+{
   auto pivot = data[end];
-  auto smaller_idx = start - 1;
-  for (auto i = start; i < end; ++i) {
-    if (data[i] < pivot) {
-      ++smaller_idx;
-      std::swap(data[i], data[smaller_idx]);
+  int smallest_idx = start - 1;
+  for (int i = start; i < end; ++i)
+    {
+      if (data[i] < pivot)
+        {
+          ++smallest_idx;
+          std::swap(data[i], data[smallest_idx]);
+        }
     }
-  }
-  ++smaller_idx;
-  std::swap(data[end], data[smaller_idx]);
-  return smaller_idx;
+  ++smallest_idx;
+  std::swap(data[smallest_idx], data[end]);
+  return smallest_idx;
 }
 
-template<typename T>
-void quicksort(std::vector<T> &data, int start, int end) {
-  if (start < end) {
-    auto part = partition(data, start, end);
-    quicksort(data, start, part - 1);
-    quicksort(data, part + 1, end);
-  }
+template <typename T>
+void quicksort(std::vector<T> &data, int start, int end)
+{
+  if (start < end)
+    {
+      int part = partition(data, start, end);
+      quicksort(data, start, part - 1);
+      quicksort(data, part + 1, end);
+    }
 }
 
 template <typename T>

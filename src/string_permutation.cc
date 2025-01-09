@@ -5,19 +5,19 @@
 #include <algorithm>
 
 static void
-permute (std::string &str, int start, int end, std::vector<std::string> &results)
+permute(std::string &str, int start, int end, std::vector<std::string> &res)
 {
   if (start == end)
     {
-      results.push_back (str);
+      res.push_back(str);
     }
   else
     {
       for (int i = start; i <= end; ++i)
         {
-          std::swap (str[i], str[start]);
-          permute (str, start + 1, end, results);
-          std::swap (str[i], str[start]);
+          std::swap (str[start], str[i]);
+          permute (str, start + 1, end, res);
+          std::swap (str[start], str[i]);
         }
     }
 }
