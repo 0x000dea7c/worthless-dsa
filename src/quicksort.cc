@@ -6,33 +6,29 @@
 
 // PARTITION, RECURSE!
 template <typename T>
-static int
-partition(std::vector<T> &data, int start, int end)
+int partition(std::vector<T> &data, int start, int end)
 {
   auto pivot = data[end];
-  int smallest_idx = start - 1;
-  for (int i = start; i < end; ++i)
-    {
-      if (data[i] < pivot)
-        {
-          ++smallest_idx;
-          std::swap(data[i], data[smallest_idx]);
-        }
+  int p = start - 1;
+  for (int i = start; i < end; ++i) {
+    if (data[i] < pivot) {
+      ++p;
+      std::swap(data[p], data[i]);
     }
-  ++smallest_idx;
-  std::swap(data[smallest_idx], data[end]);
-  return smallest_idx;
+  }
+  ++p;
+  std::swap(data[end], data[p]);
+  return p;
 }
 
 template <typename T>
 void quicksort(std::vector<T> &data, int start, int end)
 {
-  if (start < end)
-    {
-      int part = partition(data, start, end);
-      quicksort(data, start, part - 1);
-      quicksort(data, part + 1, end);
-    }
+  if (start < end) {
+    int p = partition(data, start, end);
+    quicksort(data, start, p - 1);
+    quicksort(data, p + 1, end);
+  }
 }
 
 template <typename T>
