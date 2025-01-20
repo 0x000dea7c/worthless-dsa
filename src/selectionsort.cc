@@ -8,22 +8,19 @@ template <typename T>
 void
 selection_sort (std::vector<T> &data)
 {
-  auto const n = data.size ();
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < data.size (); ++i)
     {
       size_t j_min = i;
-
-      for (size_t j = i + 1; j < n; ++j)
+      for (size_t j = i + 1; j < data.size (); ++j)
         {
           if (data[j] < data[j_min])
             {
               j_min = j;
             }
         }
-
       if (j_min != i)
         {
-          std::swap (data[i], data[j_min]);
+          std::swap (data[j_min], data[i]);
         }
     }
 }

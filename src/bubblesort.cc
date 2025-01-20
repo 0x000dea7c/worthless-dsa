@@ -8,11 +8,10 @@ template <typename T>
 void
 bubblesort (std::vector<T> &data)
 {
-  auto const n = data.size ();
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < data.size (); ++i)
     {
       bool swapped = false;
-      for (size_t j = 0; j < n - 1 - i; ++j)
+      for (size_t j = 0; j < data.size () - 1 - i; ++j)
         {
           if (data[j] > data[j + 1])
             {
